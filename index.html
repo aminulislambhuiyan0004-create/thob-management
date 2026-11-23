@@ -3744,11 +3744,179 @@ New thobe fabrics have arrived at Al-Ada'a Al-Shamikh For Men's Tailoring. Visit
     updateTodaySummary();
   </script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script>
-  const supabase = supabase.createClient(
-    'https://iqrvybxryeboccduncsn.supabase.co',
-    'sb_publishable_EGu2-hT4sjhlwGe7_FMHEQ_s2GQBtkK'
-  );
-</script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    const supabaseClient = supabase.createClient(
+      'https://iqrvybxryeboccduncsn.supabase.co',
+      'sb_publishable_EGu2-hT4sjhlwGe7_FMHEQ_s2GQBtkK'
+    );
+
+    // JS অবজেক্টকে Supabase কলামের ফরম্যাটে রূপান্তর
+    function mapOrderToDB(o) {
+      return {
+        id: o.id,
+        serial_id: o.serialId || '',
+        invoice_no: o.invoiceNo || '',
+        customer_name: o.customerName || '',
+        phone: o.phone || '',
+        qty: o.qty || 1,
+        received_date: o.receivedDate || '',
+        delivery_days_option: o.deliveryDaysOption || '',
+        delivery_date: o.deliveryDate || '',
+        measurements: o.measurements || {},
+        suta_steps: o.sutaSteps || {},
+        extra_measurements: o.extraMeasurements || {},
+        drawing_selections: o.drawingSelections || {},
+        fabric: o.fabric || '',
+        total: o.total || 0,
+        advance: o.advance || 0,
+        due: o.due || 0,
+        is_paid: !!o.isPaid,
+        payment_method: o.paymentMethod || 'Cash',
+        delivered: !!o.delivered,
+        delivered_date: o.deliveredDate || '',
+        remarks: o.remarks || '',
+        invoice_photo: o.invoicePhoto || ''
+      };
+    }
+
+    function mapOrderFromDB(r) {
+      return {
+        id: r.id,
+        serialId: r.serial_id,
+        invoiceNo: r.invoice_no,
+        customerName: r.customer_name,
+        phone: r.phone,
+        qty: r.qty || 1,
+        receivedDate: r.received_date,
+        deliveryDaysOption: r.delivery_days_option,
+        deliveryDate: r.delivery_date,
+        measurements: r.measurements || {},
+        sutaSteps: r.suta_steps || {},
+        extraMeasurements: r.extra_measurements || {},
+        drawingSelections: r.drawing_selections || {},
+        fabric: r.fabric,
+        total: Number(r.total) || 0,
+        advance: Number(r.advance) || 0,
+        due: Number(r.due) || 0,
+        isPaid: !!r.is_paid,
+        paymentMethod: r.payment_method || 'Cash',
+        delivered: !!r.delivered,
+        deliveredDate: r.delivered_date || '',
+        remarks: r.remarks || '',
+        invoicePhoto: r.invoice_photo || ''
+      };
+    }
+
+    function mapAltToDB(a) {
+      return {
+        id: a.id,
+        order_id: a.orderId || '',
+        serial_id: a.serialId || '',
+        invoice_no: a.invoiceNo || '',
+        customer_name: a.customerName || '',
+        phone: a.phone || '',
+        received_date: a.receivedDate || '',
+        delivery_days_option: a.deliveryDaysOption || '',
+        delivery_date: a.deliveryDate || '',
+        note: a.note || '',
+        new_measurements: a.newMeasurements || {},
+        suta_steps: a.sutaSteps || {},
+        extra_measurements: a.extraMeasurements || {},
+        drawing_selections: a.drawingSelections || {},
+        fabric_source: a.fabricSource || '',
+        fabric: a.fabric || '',
+        qty: a.qty || 1,
+        total: a.total || 0,
+        advance: a.advance || 0,
+        due: a.due || 0,
+        payment_method: a.paymentMethod || 'Cash',
+        remarks: a.remarks || '',
+        invoice_photo: a.invoicePhoto || '',
+        approved: !!a.approved
+      };
+    }
+
+    function mapAltFromDB(r) {
+      return {
+        id: r.id,
+        orderId: r.order_id,
+        serialId: r.serial_id,
+        invoiceNo: r.invoice_no,
+        customerName: r.customer_name,
+        phone: r.phone,
+        receivedDate: r.received_date,
+        deliveryDaysOption: r.delivery_days_option,
+        deliveryDate: r.delivery_date,
+        note: r.note,
+        newMeasurements: r.new_measurements || {},
+        sutaSteps: r.suta_steps || {},
+        extraMeasurements: r.extra_measurements || {},
+        drawingSelections: r.drawing_selections || {},
+        fabricSource: r.fabric_source || '',
+        fabric: r.fabric,
+        qty: r.qty || 1,
+        total: Number(r.total) || 0,
+        advance: Number(r.advance) || 0,
+        due: Number(r.due) || 0,
+        paymentMethod: r.payment_method || 'Cash',
+        remarks: r.remarks || '',
+        invoicePhoto: r.invoice_photo || '',
+        approved: !!r.approved
+      };
+    }
+
+    // আগের saveLocal ফাংশনকে আপডেট করে Supabase-এও সিঙ্ক করা
+    const originalSaveLocal = saveLocal;
+    saveLocal = async function() {
+      originalSaveLocal();
+      try {
+        if (orders.length > 0) {
+          await supabaseClient.from('orders').upsert(orders.map(mapOrderToDB));
+        }
+        if (catalog.length > 0) {
+          await supabaseClient.from('catalog').upsert(catalog.map(c => ({
+            id: c.id, origin: c.origin, type: c.type, color: c.color, photo: c.photo || '', active: !!c.active
+          })));
+        }
+        if (alterations.length > 0) {
+          await supabaseClient.from('alterations').upsert(alterations.map(mapAltToDB));
+        }
+      } catch (err) {
+        console.error('Supabase sync error:', err);
+      }
+    };
+
+    // অ্যাপ চালু হলে Supabase থেকে সব ডেটা লোড করা
+    async function loadFromSupabase() {
+      try {
+        const [ordRes, catRes, altRes] = await Promise.all([
+          supabaseClient.from('orders').select('*').order('created_at', { ascending: false }),
+          supabaseClient.from('catalog').select('*').order('created_at', { ascending: false }),
+          supabaseClient.from('alterations').select('*').order('created_at', { ascending: false })
+        ]);
+
+        if (ordRes.data && ordRes.data.length > 0) {
+          orders = ordRes.data.map(mapOrderFromDB);
+          if (serialCounter < orders.length) serialCounter = orders.length;
+        }
+        if (catRes.data && catRes.data.length > 0) {
+          catalog = catRes.data;
+        }
+        if (altRes.data && altRes.data.length > 0) {
+          alterations = altRes.data.map(mapAltFromDB);
+        }
+
+        originalSaveLocal();
+        refreshSerialDisplay();
+        updateTodaySummary();
+        syncCatalogDropdowns();
+      } catch (err) {
+        console.error('Supabase load error:', err);
+      }
+    }
+
+    loadFromSupabase();
+  </script>
 </body>
 </html>
