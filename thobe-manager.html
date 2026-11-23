@@ -1,0 +1,3746 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Al-Ada'a Al-Shamikh | Thobe Management System</title>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
+  <style>
+    :root {
+      --bg: #f1f5f9;
+      --card: #ffffff;
+      --text: #0f172a;
+      --muted: #475569;
+      --primary: #0f766e;
+      --primary-dark: #115e59;
+      --whatsapp: #16a34a;
+      --whatsapp-dark: #15803d;
+      --danger: #dc2626;
+      --warning: #d97706;
+      --border: #cbd5e1;
+      --light-bg: #f8fafc;
+      --transition-speed: 0.25s;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.45;
+      min-height: 100vh;
+      transition: background-color 0.3s ease;
+    }
+
+    @keyframes pulse-pop {
+      0% { transform: scale(1); }
+      45% { transform: scale(1.06); box-shadow: 0 0 14px rgba(15, 118, 110, 0.45); }
+      100% { transform: scale(1); }
+    }
+
+    @keyframes save-glow {
+      0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(22, 163, 74, 0.65); }
+      50% { transform: scale(1.05); box-shadow: 0 0 0 12px rgba(22, 163, 74, 0); }
+      100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(22, 163, 74, 0); }
+    }
+
+    @keyframes delete-shake-out {
+      0% { transform: translateX(0) scale(1); opacity: 1; }
+      20% { transform: translateX(-6px); }
+      40% { transform: translateX(6px); }
+      60% { transform: translateX(-4px); opacity: 0.8; }
+      100% { transform: translateX(24px) scale(0.95); opacity: 0; }
+    }
+
+    @keyframes whatsapp-bounce {
+      0%, 100% { transform: translateY(0); }
+      40% { transform: translateY(-4px) scale(1.04); }
+      70% { transform: translateY(1px); }
+    }
+
+    @keyframes fade-in-down {
+      from { opacity: 0; transform: translateY(-10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .animate-click { animation: pulse-pop 0.28s ease-out; }
+    .animate-save { animation: save-glow 0.45s ease-out; }
+    .animate-delete-card { animation: delete-shake-out 0.38s ease-in forwards; }
+    .animate-wa { animation: whatsapp-bounce 0.35s ease; }
+    .animate-fade { animation: fade-in-down 0.3s ease-out; }
+
+    body.home-full-bg {
+      background:
+        linear-gradient(rgba(15, 23, 42, 0.52), rgba(15, 23, 42, 0.58)),
+        url('35090.jpg') center center / cover no-repeat fixed;
+    }
+
+    body.home-full-bg header,
+    body.home-full-bg .card {
+      background: rgba(255, 255, 255, 0.92);
+      backdrop-filter: blur(6px);
+    }
+
+    body.home-full-bg .stat-box {
+      background: rgba(248, 250, 252, 0.92);
+    }
+
+    #lock-screen {
+      position: fixed;
+      inset: 0;
+      background: linear-gradient(135deg, #0f172a 0%, #0f766e 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      padding: 20px;
+    }
+
+    .lock-box {
+      background: #fff;
+      padding: 28px 24px;
+      border-radius: 16px;
+      width: 100%;
+      max-width: 400px;
+      text-align: center;
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
+      animation: fade-in-down 0.3s ease-out;
+    }
+
+    .lock-box h2 { color: var(--primary); margin-bottom: 4px; font-size: 1.4rem; }
+    .lock-box .ar-title { font-size: 1.2rem; color: #334155; font-weight: 700; margin-bottom: 14px; }
+    .pin-input {
+      width: 100%;
+      padding: 13px;
+      font-size: 1.4rem;
+      letter-spacing: 8px;
+      text-align: center;
+      border: 2px solid var(--border);
+      border-radius: 10px;
+      margin-bottom: 12px;
+    }
+
+    .recovery-panel {
+      margin-top: 12px;
+      padding: 12px;
+      background: #f8fafc;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      text-align: left;
+      font-size: 0.85rem;
+      animation: fade-in-down 0.25s ease-out;
+    }
+
+    #undo-toast {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: #0f172a;
+      color: #fff;
+      padding: 12px 16px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      z-index: 9500;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+      animation: fade-in-down 0.3s ease-out;
+    }
+
+    .container { max-width: 1320px; margin: 0 auto; padding: 14px; }
+
+    header {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 16px 20px;
+      margin-bottom: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+
+    .brand-area h1 { font-size: 1.35rem; color: var(--primary); }
+    .brand-area .ar-sub { font-size: 1.05rem; font-weight: 700; color: #1e293b; }
+    .brand-area p { font-size: 0.85rem; color: var(--muted); }
+
+    .header-controls { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+
+    .nav-bar {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 6px;
+      margin-bottom: 16px;
+    }
+
+    button {
+      border: none;
+      border-radius: 8px;
+      padding: 10px 15px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background-color var(--transition-speed), transform 0.12s ease, box-shadow 0.2s ease;
+      white-space: nowrap;
+    }
+
+    button:active {
+      transform: scale(0.95);
+    }
+
+    .btn-primary { background: var(--primary); color: #fff; }
+    .btn-primary:hover { background: var(--primary-dark); }
+    .btn-secondary { background: #fff; color: var(--text); border: 1px solid var(--border); }
+    .btn-secondary:hover { background: #e2e8f0; }
+    .btn-secondary.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+    .btn-whatsapp { background: var(--whatsapp); color: #fff; }
+    .btn-whatsapp:hover { background: var(--whatsapp-dark); }
+    .btn-danger { background: var(--danger); color: #fff; }
+    .btn-danger:hover { background: #b91c1c; }
+    .btn-warning { background: var(--warning); color: #fff; }
+    .btn-sm { padding: 6px 10px; font-size: 0.8rem; }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 20px;
+      margin-bottom: 18px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    }
+
+    .card-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 16px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid #e2e8f0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .home-hero-overlay {
+      background: rgba(15, 23, 42, 0.72);
+      backdrop-filter: blur(4px);
+      color: #fff;
+      border-radius: 14px;
+      padding: 28px 24px;
+      margin-bottom: 18px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.25);
+    }
+
+    .home-hero-overlay h2 { font-size: 1.6rem; margin-bottom: 6px; }
+    .home-hero-overlay p { opacity: 0.92; font-size: 0.95rem; }
+    .quick-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 16px; }
+    .quick-actions button { background: #fff; color: var(--primary-dark); font-weight: 700; }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+      gap: 12px;
+    }
+
+    .stat-box {
+      background: var(--light-bg);
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 14px;
+      transition: transform 0.2s ease;
+    }
+    .stat-box:hover { transform: translateY(-2px); }
+
+    .stat-box .label { font-size: 0.8rem; color: var(--muted); font-weight: 600; }
+    .stat-box .value { font-size: 1.35rem; font-weight: 800; color: var(--text); margin-top: 4px; }
+    .stat-box .sub-breakdown {
+      margin-top: 8px;
+      padding-top: 8px;
+      border-top: 1px dashed #cbd5e1;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: #1e293b;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+    .stat-box.highlight { border-left: 4px solid var(--primary); }
+    .stat-box.green { border-left: 4px solid var(--whatsapp); }
+    .stat-box.orange { border-left: 4px solid var(--warning); }
+
+    .alt-mode-bar {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+
+    .alt-panel {
+      background: #f8fafc;
+      padding: 18px;
+      border-radius: 12px;
+      border: 1px solid #cbd5e1;
+    }
+
+    .alt-panel-title {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--primary);
+      margin-bottom: 14px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid #cbd5e1;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .alt-preview-box {
+      margin-top: 12px;
+      padding: 14px;
+      background: #f8fafc;
+      border: 1.5px solid #0f766e;
+      border-radius: 10px;
+      font-size: 0.86rem;
+    }
+
+    .grid-form {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 14px;
+    }
+
+    .form-group { display: flex; flex-direction: column; gap: 5px; }
+    .form-group.full { grid-column: 1 / -1; }
+
+    label { font-size: 0.84rem; font-weight: 600; color: #334155; }
+    input, select, textarea {
+      padding: 9px 11px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 0.92rem;
+      background: #fff;
+    }
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+
+    /* ==================== ১ সুতা (+ / -) STEPPER CONTROLS ==================== */
+    .suta-stepper {
+      margin-top: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 4px;
+      background: #f0fdfa;
+      border: 1px solid #99f6e4;
+      border-radius: 7px;
+      padding: 3px 4px;
+    }
+
+    .suta-btn {
+      width: 26px;
+      height: 24px;
+      padding: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.95rem;
+      font-weight: 800;
+      border-radius: 5px;
+      background: #0f766e;
+      color: #fff;
+      line-height: 1;
+      flex-shrink: 0;
+    }
+
+    .suta-btn:hover {
+      background: #115e59;
+    }
+
+    .suta-readout {
+      font-size: 0.74rem;
+      font-weight: 700;
+      color: #0f172a;
+      text-align: center;
+      flex: 1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .suta-comment-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+      margin-top: 6px;
+      padding: 4px 6px;
+      background: #ecfdf5;
+      border: 1px solid #6ee7b7;
+      border-radius: 6px;
+    }
+
+    .suta-comment-bar .suta-label {
+      font-size: 0.74rem;
+      font-weight: 700;
+      color: #065f46;
+    }
+
+    .serial-pill {
+      background: #ecfdf5;
+      border: 1px solid #10b981;
+      color: #065f46;
+      padding: 9px 12px;
+      border-radius: 8px;
+      font-weight: 800;
+      font-size: 0.95rem;
+    }
+
+    .phone-wrap { display: flex; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+    .phone-wrap span { background: #e2e8f0; padding: 9px 12px; font-weight: 700; font-size: 0.9rem; }
+    .phone-wrap input { border: none; flex: 1; }
+
+    .photo-btn-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+
+    .camera-trigger-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #0f766e;
+      color: #fff;
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 0.84rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .gallery-trigger-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #e2e8f0;
+      color: #0f172a;
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 0.84rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .measure-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(155px, 1fr));
+      gap: 10px;
+      background: #f8fafc;
+      padding: 12px;
+      border-radius: 10px;
+      border: 1px solid #e2e8f0;
+    }
+
+    .measure-card {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 9px;
+      text-align: center;
+    }
+
+    .measure-card .ar { font-size: 1rem; font-weight: 700; color: var(--primary); }
+    .measure-card .en { font-size: 0.78rem; color: var(--muted); margin-bottom: 5px; }
+    .measure-card input[type="number"] { width: 100%; text-align: center; font-weight: 700; font-size: 0.95rem; }
+
+    .extra-measure-box {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 14px;
+      margin-top: 14px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 16px;
+    }
+
+    .sub-panel {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px;
+    }
+
+    .sub-panel h4 {
+      font-size: 0.92rem;
+      color: var(--primary);
+      margin-bottom: 10px;
+      border-bottom: 1px solid #e2e8f0;
+      padding-bottom: 5px;
+    }
+
+    .mini-input-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+    .mini-input-row.two-col { grid-template-columns: repeat(2, 1fr); }
+    .mini-field {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 7px;
+      padding: 7px;
+      text-align: center;
+    }
+    .mini-field span { font-size: 0.78rem; font-weight: 700; color: #1e293b; }
+    .mini-field input[type="number"] { width: 100%; padding: 7px 6px; font-size: 0.92rem; text-align: center; font-weight: 700; background: #fff; }
+
+    .diagram-sheet {
+      background: #fff;
+      border: 2px solid #0f172a;
+      border-radius: 10px;
+      padding: 16px;
+      margin-top: 16px;
+    }
+
+    .diagram-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1.5px solid #0f172a;
+      padding-bottom: 8px;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .diagram-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 14px;
+    }
+
+    .drawing-group {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px;
+      background: #f8fafc;
+    }
+
+    .drawing-group-title {
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: #0f172a;
+      margin-bottom: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .items-strip { display: flex; flex-wrap: wrap; gap: 10px; }
+
+    .art-item {
+      position: relative;
+      background: #fff;
+      border: 1.5px solid #cbd5e1;
+      border-radius: 8px;
+      padding: 8px;
+      width: 122px;
+      text-align: center;
+      transition: all var(--transition-speed) cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .art-item.type-card {
+      width: calc(50% - 5px);
+      min-width: 120px;
+    }
+
+    .art-item.expanded-comment {
+      width: 100%;
+      border-color: var(--primary);
+    }
+
+    .art-item.active-item {
+      border-color: var(--primary);
+      background: #f0fdfa;
+      box-shadow: 0 4px 12px rgba(15, 118, 110, 0.15);
+    }
+
+    .art-top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 4px;
+      font-size: 0.74rem;
+      font-weight: 700;
+      margin-bottom: 5px;
+    }
+
+    .art-svg-wrap {
+      cursor: pointer;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 4px 2px;
+    }
+
+    .type-pill-visual {
+      padding: 7px 8px;
+      border-radius: 6px;
+      background: #f1f5f9;
+      border: 1px solid #cbd5e1;
+      width: 100%;
+      font-weight: 700;
+      font-size: 0.84rem;
+      color: #0f172a;
+      transition: background-color var(--transition-speed);
+    }
+
+    .art-item.active-item .type-pill-visual {
+      background: #ccfbf1;
+      border-color: var(--primary);
+      color: #115e59;
+    }
+
+    .art-comment-box {
+      width: 100%;
+      text-align: left;
+      overflow: hidden;
+      max-height: 0;
+      opacity: 0;
+      margin-top: 0;
+      transition: max-height var(--transition-speed) ease, opacity var(--transition-speed) ease, margin-top var(--transition-speed) ease;
+    }
+
+    .art-item.expanded-comment .art-comment-box {
+      max-height: 180px;
+      opacity: 1;
+      margin-top: 8px;
+    }
+
+    .art-comment-box textarea {
+      width: 100%;
+      font-size: 0.84rem;
+      line-height: 1.45;
+      padding: 8px 10px;
+      border: 1.5px solid var(--primary);
+      border-radius: 6px;
+      background: #fffbeb;
+      resize: vertical;
+      min-height: 70px;
+    }
+
+    .word-counter {
+      font-size: 0.72rem;
+      color: var(--muted);
+      text-align: right;
+      margin-top: 4px;
+    }
+
+    .body-diagram-box {
+      background: #fff;
+      border: 1.5px solid #cbd5e1;
+      border-radius: 8px;
+      padding: 10px;
+      text-align: center;
+    }
+
+    .record-card {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px;
+      background: #fff;
+      margin-bottom: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      flex-wrap: wrap;
+      gap: 12px;
+      transition: box-shadow 0.2s ease, transform 0.2s ease;
+    }
+
+    .record-card:hover {
+      box-shadow: 0 6px 15px rgba(0,0,0,0.08);
+      transform: translateY(-2px);
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 3px 9px;
+      border-radius: 999px;
+      font-size: 0.78rem;
+      font-weight: 700;
+    }
+    .badge-paid { background: #dcfce7; color: #166534; }
+    .badge-due { background: #fee2e2; color: #991b1b; }
+    .badge-pending { background: #fef3c7; color: #92400e; }
+    .badge-approved { background: #dbeafe; color: #1e40af; }
+
+    .pill-row { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; }
+    .pill { background: #f1f5f9; padding: 4px 8px; border-radius: 6px; font-size: 0.8rem; font-weight: 600; }
+
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+    th, td { border: 1px solid var(--border); padding: 10px; text-align: left; }
+    th { background: #f1f5f9; font-weight: 700; }
+
+    body.privacy-mode .sensitive-finance,
+    body.privacy-mode .sensitive-customer {
+      filter: blur(6px);
+      pointer-events: none;
+      user-select: none;
+    }
+
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.55);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 8500;
+      padding: 16px;
+    }
+    .modal-box {
+      background: #fff;
+      border-radius: 14px;
+      padding: 22px;
+      width: 100%;
+      max-width: 480px;
+      border: 1px solid var(--border);
+      box-shadow: 0 20px 30px rgba(0,0,0,0.25);
+      max-height: 90vh;
+      overflow-y: auto;
+      animation: fade-in-down 0.25s ease-out;
+    }
+
+    .catalog-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+      gap: 14px;
+    }
+    .cat-card {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+      background: #fff;
+      transition: transform 0.2s ease;
+    }
+    .cat-card:hover { transform: translateY(-3px); }
+    .cat-card img { width: 100%; height: 140px; object-fit: cover; background: #e2e8f0; }
+    .cat-card-body { padding: 12px; }
+
+    .invoice-sheet {
+      background: #fff;
+      border: 2px solid #000;
+      padding: 18px;
+      max-width: 860px;
+      margin: 0 auto;
+      color: #000;
+    }
+    .inv-top-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 2px solid #000;
+      padding-bottom: 10px;
+      margin-bottom: 12px;
+    }
+    .inv-box-title {
+      background: #000;
+      color: #fff;
+      padding: 6px 12px;
+      text-align: center;
+      font-weight: 700;
+      border-radius: 4px;
+    }
+    .inv-grid-table { width: 100%; border-collapse: collapse; margin-bottom: 12px; }
+    .inv-grid-table th, .inv-grid-table td {
+      border: 1.5px solid #000;
+      padding: 6px 8px;
+      text-align: center;
+      font-size: 0.88rem;
+    }
+    .tear-line {
+      border-top: 2px dashed #000;
+      margin: 18px 0;
+      position: relative;
+      text-align: center;
+    }
+    .tear-line span {
+      background: #fff;
+      padding: 0 10px;
+      font-size: 0.75rem;
+      position: relative;
+      top: -10px;
+    }
+
+    .customer-invoice-hide-measurements {
+      display: none !important;
+    }
+
+    .hidden { display: none !important; }
+
+    @media print {
+      body * { visibility: hidden; }
+      #invoice-modal, #invoice-modal * { visibility: visible; }
+      #invoice-modal { position: absolute; left: 0; top: 0; width: 100%; border: none; padding: 0; }
+      .no-print { display: none !important; }
+      .customer-invoice-hide-measurements { display: none !important; }
+    }
+  </style>
+</head>
+<body class="home-full-bg">
+
+  <!-- PIN Lock Screen -->
+  <div id="lock-screen">
+    <div class="lock-box">
+      <h2>Al-Ada'a Al-Shamikh</h2>
+      <div class="ar-title">الأداء الشامخ للخياطة الرجالية</div>
+      <p style="font-size: 0.85rem; color: #475569; margin-bottom: 12px;">Enter PIN to unlock system (Default: 1234)</p>
+      <input type="password" id="pin-field" class="pin-input" maxlength="6" placeholder="0000" inputmode="numeric" onkeydown="if(event.key==='Enter') unlockApp()" />
+      <button type="button" class="btn-primary" style="width: 100%; padding: 12px;" onclick="triggerAnim(this, 'animate-click', unlockApp)">Unlock System</button>
+      <button type="button" class="btn-secondary" style="width: 100%; margin-top: 8px;" onclick="triggerAnim(this, 'animate-click', toggleForgotPinPanel)">Forgot PIN? (Email Recovery)</button>
+      <p id="lock-error" style="color: #dc2626; font-size: 0.85rem; margin-top: 8px;"></p>
+
+      <div id="forgot-pin-panel" class="recovery-panel hidden">
+        <strong style="display:block; margin-bottom:6px; color:var(--primary);">Recover / Reset PIN via Verified Email</strong>
+        <p id="recovery-email-status" style="margin-bottom:8px; color:#334155;"></p>
+        <div class="form-group" style="margin-bottom:8px;">
+          <label>Verified Email Address</label>
+          <input type="email" id="recovery-email-input" placeholder="owner@example.com" />
+        </div>
+        <button type="button" class="btn-secondary btn-sm" style="margin-bottom:8px;" onclick="triggerAnim(this, 'animate-click', sendRecoveryCode)">Send Recovery Code</button>
+        <div id="recovery-code-display" style="font-size:0.8rem; color:#0f766e; font-weight:700; margin-bottom:8px;"></div>
+        <div class="form-group" style="margin-bottom:8px;">
+          <label>Verification Code</label>
+          <input type="text" id="recovery-code-input" placeholder="000000" />
+        </div>
+        <div class="form-group" style="margin-bottom:8px;">
+          <label>New PIN (4-6 digits)</label>
+          <input type="password" id="recovery-new-pin" maxlength="6" placeholder="0000" inputmode="numeric" />
+        </div>
+        <button type="button" class="btn-primary btn-sm" style="width:100%;" onclick="triggerAnim(this, 'animate-save', resetPinWithEmail)">Verify & Reset PIN</button>
+        <p id="recovery-msg" style="font-size:0.8rem; margin-top:6px; color:#dc2626;"></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Undo Delete Banner -->
+  <div id="undo-toast" class="hidden">
+    <span id="undo-toast-text">Order deleted.</span>
+    <button type="button" class="btn-warning btn-sm" onclick="triggerAnim(this, 'animate-click', undoLastDelete)">Undo</button>
+  </div>
+
+  <!-- Settings Modal -->
+  <div id="settings-modal" class="modal-backdrop hidden">
+    <div class="modal-box">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; border-bottom:1px solid #e2e8f0; padding-bottom:10px;">
+        <h3 style="color:var(--primary);">⚙ System Settings & Exports</h3>
+        <button type="button" class="btn-secondary btn-sm" onclick="closeSettingsModal()">✕</button>
+      </div>
+
+      <div class="form-group" style="margin-bottom:12px;">
+        <label>Owner WhatsApp Number</label>
+        <div style="display:flex; gap:8px;">
+          <input type="text" id="owner-wa-number" value="966541141052" style="flex:1;" />
+          <button type="button" class="btn-primary btn-sm" onclick="triggerAnim(this, 'animate-save', saveOwnerNumber)">Save</button>
+        </div>
+      </div>
+
+      <div style="background:#f8fafc; padding:12px; border-radius:8px; border:1px solid #e2e8f0; margin-bottom:12px;">
+        <strong style="font-size:0.9rem; display:block; margin-bottom:6px;">Verified Recovery Email (Add / Change)</strong>
+        <p id="settings-verified-email-badge" style="font-size:0.8rem; color:#475569; margin-bottom:8px;"></p>
+        <div class="form-group" style="margin-bottom:8px;">
+          <label>Email Address</label>
+          <input type="email" id="settings-email-input" placeholder="you@example.com" />
+        </div>
+        <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:8px;">
+          <button type="button" class="btn-secondary btn-sm" onclick="triggerAnim(this, 'animate-click', sendSettingsEmailCode)">Send Verification Code</button>
+          <input type="text" id="settings-email-code" placeholder="Enter code" style="width:120px; padding:6px 8px;" />
+          <button type="button" class="btn-primary btn-sm" onclick="triggerAnim(this, 'animate-save', verifyAndSaveEmail)">Verify & Save Email</button>
+        </div>
+        <div id="settings-email-code-hint" style="font-size:0.78rem; color:#0f766e; font-weight:700;"></div>
+      </div>
+
+      <div style="background:#f8fafc; padding:12px; border-radius:8px; border:1px solid #e2e8f0; margin-bottom:12px;">
+        <strong style="font-size:0.9rem; display:block; margin-bottom:8px;">Security / PIN</strong>
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+          <button type="button" class="btn-secondary btn-sm" onclick="triggerAnim(this, 'animate-click', changePinPrompt)">Change PIN</button>
+          <button type="button" class="btn-secondary btn-sm" onclick="triggerAnim(this, 'animate-click', openForgotFromSettings)">Forgot PIN (Email Recovery)</button>
+        </div>
+      </div>
+
+      <div style="background:#f8fafc; padding:12px; border-radius:8px; border:1px solid #e2e8f0;">
+        <strong style="font-size:0.9rem; display:block; margin-bottom:8px;">Download Orders & Statements (CSV)</strong>
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+          <button type="button" class="btn-secondary btn-sm" onclick="triggerAnim(this, 'animate-click', () => exportOrdersCSV('daily'))">Today CSV</button>
+          <button type="button" class="btn-secondary btn-sm" onclick="triggerAnim(this, 'animate-click', () => exportOrdersCSV('weekly'))">Last 7 Days CSV</button>
+          <button type="button" class="btn-secondary btn-sm" onclick="triggerAnim(this, 'animate-click', () => exportOrdersCSV('monthly'))">This Month CSV</button>
+          <button type="button" class="btn-primary btn-sm" onclick="triggerAnim(this, 'animate-save', () => exportOrdersCSV('all'))">All Orders CSV</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="container">
+    <!-- Top Header -->
+    <header>
+      <div class="brand-area">
+        <h1>Al-Ada'a Al-Shamikh For Men's Tailoring</h1>
+        <div class="ar-sub">الأداء الشامخ للخياطة الرجالية</div>
+        <p>Riyadh - Al Naseem District | Mob: 0541141052</p>
+      </div>
+      <div class="header-controls">
+        <button type="button" class="btn-secondary btn-sm" onclick="triggerAnim(this, 'animate-click', togglePrivacyMode)" id="privacy-btn">Hide Finance & Customer</button>
+        <button type="button" class="btn-secondary btn-sm" onclick="triggerAnim(this, 'animate-click', openSettingsModal)">⚙ Settings</button>
+        <button type="button" class="btn-danger btn-sm" onclick="triggerAnim(this, 'animate-click', lockApp)">Lock</button>
+      </div>
+    </header>
+
+    <!-- Navigation -->
+    <div class="nav-bar">
+      <button type="button" class="btn-secondary active" data-tab="home" onclick="triggerAnim(this, 'animate-click', () => switchTab('home'))">Home & Today</button>
+      <button type="button" class="btn-secondary" data-tab="order" onclick="triggerAnim(this, 'animate-click', () => switchTab('order'))">Place Order</button>
+      <button type="button" class="btn-secondary" data-tab="search" onclick="triggerAnim(this, 'animate-click', () => switchTab('search'))">Search Customer</button>
+      <button type="button" class="btn-secondary" data-tab="alteration" onclick="triggerAnim(this, 'animate-click', () => switchTab('alteration'))">Alteration Track</button>
+      <button type="button" class="btn-secondary" data-tab="catalog" onclick="triggerAnim(this, 'animate-click', () => switchTab('catalog'))">Fabric & Color Catalog</button>
+      <button type="button" class="btn-secondary" data-tab="statement" onclick="triggerAnim(this, 'animate-click', () => switchTab('statement'))">Monthly Statement</button>
+      <button type="button" class="btn-secondary" data-tab="offers" onclick="triggerAnim(this, 'animate-click', () => switchTab('offers'))">Offer Sender</button>
+    </div>
+
+    <!-- ==================== 1. HOME TAB ==================== -->
+    <div id="tab-home" class="tab-section">
+      <div class="home-hero-overlay animate-fade">
+        <div>
+          <h2>Al-Ada'a Al-Shamikh For Men's Tailoring</h2>
+          <p>Precision Thobe Cutting, Customer Measurements & Daily Financial Management</p>
+          <div class="quick-actions">
+            <button type="button" onclick="triggerAnim(this, 'animate-save', openNewOrder)">+ Place Order</button>
+            <button type="button" onclick="triggerAnim(this, 'animate-click', () => switchTab('search'))">Search Customer</button>
+            <button type="button" onclick="triggerAnim(this, 'animate-click', () => switchTab('alteration'))">Alteration Track</button>
+          </div>
+        </div>
+        <div style="text-align: right;">
+          <div style="font-size: 0.85rem; opacity: 0.85;">Today's Date</div>
+          <div id="today-date-display" style="font-size: 1.2rem; font-weight: 700;"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">
+          <span>Today's Business & Delivery Summary</span>
+          <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            <button type="button" class="btn-secondary btn-sm" onclick="triggerAnim(this, 'animate-click', () => exportOrdersCSV('daily'))">⬇ Daily CSV</button>
+            <button type="button" class="btn-whatsapp btn-sm" onclick="triggerAnim(this, 'animate-wa', sendOwnerDailyReport)">Send Daily Summary to Owner (WhatsApp)</button>
+          </div>
+        </div>
+
+        <div class="stats-grid sensitive-finance">
+          <div class="stat-box highlight">
+            <div class="label">New Orders Today</div>
+            <div class="value" id="td-new-orders">0</div>
+            <div class="sub-breakdown">
+              <span>Total Thobes Qty: <strong id="td-new-thobes-qty">0</strong></span>
+            </div>
+          </div>
+          <div class="stat-box highlight">
+            <div class="label">Today's Order Value</div>
+            <div class="value" id="td-order-value">0 SAR</div>
+          </div>
+          <div class="stat-box green">
+            <div class="label">Deliveries Made Today</div>
+            <div class="value" id="td-delivered-count">0</div>
+            <div class="sub-breakdown">
+              <span>Delivered Thobes: <strong id="td-del-thobes-qty">0</strong></span>
+            </div>
+          </div>
+          <div class="stat-box green">
+            <div class="label">Today's Delivery Value</div>
+            <div class="value" id="td-delivered-value">0 SAR</div>
+          </div>
+          <div class="stat-box green">
+            <div class="label">Total Received (Today Only)</div>
+            <div class="value" id="td-total-received">0 SAR</div>
+            <div class="sub-breakdown">
+              <span>Cash: <strong id="td-cash">0 SAR</strong></span>
+              <span>Seva Card: <strong id="td-seva-card">0 SAR</strong></span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== 2. PLACE ORDER TAB ==================== -->
+    <div id="tab-order" class="tab-section hidden">
+      <div class="card">
+        <div class="card-title">
+          <span id="order-form-heading">Place New Thobe Order</span>
+          <button type="button" class="btn-secondary btn-sm" onclick="triggerAnim(this, 'animate-click', resetOrderForm)">Clear Form</button>
+        </div>
+
+        <form id="order-form" novalidate onsubmit="event.preventDefault();">
+          <input type="hidden" id="edit-order-id" />
+
+          <div class="grid-form">
+            <div class="form-group">
+              <label>System Serial Invoice ID (Auto Sequential)</label>
+              <div class="serial-pill" id="next-serial-id-display">ID-0001</div>
+            </div>
+            <div class="form-group">
+              <label>Manual Invoice No</label>
+              <input type="text" id="inv-no" placeholder="0000" />
+            </div>
+            <div class="form-group">
+              <label>Customer Name (الاسم) *</label>
+              <input type="text" id="cust-name" class="sensitive-customer" placeholder="Customer Name" />
+            </div>
+            <div class="form-group">
+              <label>Mobile Number (جوال العميل) *</label>
+              <div class="phone-wrap sensitive-customer">
+                <span>+966</span>
+                <input type="tel" id="cust-phone" placeholder="5XXXXXXXX" />
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Received Date (تاريخ الاستلام)</label>
+              <input type="date" id="rec-date" onchange="recalcDeliveryFromOption()" />
+            </div>
+            <div class="form-group">
+              <label>Auto Delivery Days Option</label>
+              <select id="del-days-select" onchange="recalcDeliveryFromOption()">
+                <option value="5">5 Days Later</option>
+                <option value="7">7 Days Later</option>
+                <option value="8" selected>8 Days Later</option>
+                <option value="10">10 Days Later</option>
+                <option value="custom">Custom Days / Manual Date</option>
+              </select>
+            </div>
+            <div class="form-group" id="custom-days-wrap" style="display:none;">
+              <label>Custom Days After Received Date</label>
+              <input type="number" id="custom-del-days" min="1" value="0" oninput="applyCustomDays()" />
+            </div>
+            <div class="form-group">
+              <label>Delivery Date (تاريخ التسليم)</label>
+              <input type="date" id="del-date" />
+            </div>
+          </div>
+
+          <!-- Main Measurements + 1 Suta Stepper -->
+          <h3 style="margin: 18px 0 10px; font-size: 1rem; color: var(--primary);">المقاس / Measurement (১ সুতা — / +)</h3>
+          <div class="measure-grid">
+            <div class="measure-card">
+              <div class="ar">الطول</div>
+              <div class="en">Length</div>
+              <input type="number" step="any" id="m-length" placeholder="0.0" />
+              <div class="suta-stepper" id="stepper-m-length"></div>
+            </div>
+            <div class="measure-card">
+              <div class="ar">الكتف</div>
+              <div class="en">Shoulder</div>
+              <input type="number" step="any" id="m-shoulder" placeholder="0.0" />
+              <div class="suta-stepper" id="stepper-m-shoulder"></div>
+            </div>
+            <div class="measure-card">
+              <div class="ar">الكم</div>
+              <div class="en">Fullsleeve</div>
+              <input type="number" step="any" id="m-sleeve" placeholder="0.0" />
+              <div class="suta-stepper" id="stepper-m-sleeve"></div>
+            </div>
+            <div class="measure-card">
+              <div class="ar">الصدر</div>
+              <div class="en">Chest</div>
+              <input type="number" step="any" id="m-chest" placeholder="0.0" />
+              <div class="suta-stepper" id="stepper-m-chest"></div>
+            </div>
+            <div class="measure-card">
+              <div class="ar">الوسع</div>
+              <div class="en">Widen</div>
+              <input type="number" step="any" id="m-widen" placeholder="0.0" />
+              <div class="suta-stepper" id="stepper-m-widen"></div>
+            </div>
+            <div class="measure-card">
+              <div class="ar">الرقبة</div>
+              <div class="en">Neck</div>
+              <input type="number" step="any" id="m-neck" placeholder="0.0" />
+              <div class="suta-stepper" id="stepper-m-neck"></div>
+            </div>
+            <div class="measure-card">
+              <div class="ar">الذيل</div>
+              <div class="en">Hem</div>
+              <input type="number" step="any" id="m-hem" placeholder="0.0" />
+              <div class="suta-stepper" id="stepper-m-hem"></div>
+            </div>
+          </div>
+
+          <!-- Extra Measurements + 1 Suta Stepper -->
+          <div class="extra-measure-box">
+            <div class="sub-panel">
+              <h4>Fullsleeve Detailed Measurements (Top / Middle / Bottom + ১ সুতা — / +)</h4>
+              <div class="mini-input-row">
+                <div class="mini-field">
+                  <span>Top</span>
+                  <input type="number" step="any" id="sl-top" placeholder="0.0" />
+                  <div class="suta-stepper" id="stepper-sl-top"></div>
+                </div>
+                <div class="mini-field">
+                  <span>Middle</span>
+                  <input type="number" step="any" id="sl-mid" placeholder="0.0" />
+                  <div class="suta-stepper" id="stepper-sl-mid"></div>
+                </div>
+                <div class="mini-field">
+                  <span>Bottom</span>
+                  <input type="number" step="any" id="sl-bot" placeholder="0.0" />
+                  <div class="suta-stepper" id="stepper-sl-bot"></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="sub-panel">
+              <h4>Body Measurements (Sadar Kamel & Hip + ১ সুতা — / +)</h4>
+              <div class="mini-input-row two-col">
+                <div class="mini-field">
+                  <span>Sadar Kamel</span>
+                  <input type="number" step="any" id="bd-chest" placeholder="0.0" />
+                  <div class="suta-stepper" id="stepper-bd-chest"></div>
+                </div>
+                <div class="mini-field">
+                  <span>Hip</span>
+                  <input type="number" step="any" id="bd-hip" placeholder="0.0" />
+                  <div class="suta-stepper" id="stepper-bd-hip"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Invoice Drawing & Style Sheet -->
+          <div class="diagram-sheet">
+            <div class="diagram-header">
+              <div>
+                <strong>Invoice Drawing & Style Sheet</strong>
+                <div style="font-size: 0.78rem; color: var(--muted);">
+                  Click any box to open its comment field • Use — / + on ১ সুতা (in comment box, + adds 1 suta to the value inside the comment box, e.g. 33).
+                </div>
+              </div>
+            </div>
+
+            <div class="diagram-grid">
+              <div class="drawing-group">
+                <div class="drawing-group-title"><span>Thobe Type / النوع (Select & Comment)</span></div>
+                <div class="items-strip" id="type-items-strip"></div>
+              </div>
+
+              <div class="drawing-group">
+                <div class="drawing-group-title"><span>Collars (Select, ১ সুতা & Comment)</span></div>
+                <div class="items-strip" id="collar-items-strip"></div>
+              </div>
+
+              <div class="drawing-group">
+                <div class="drawing-group-title"><span>Sleeves (Select, ১ সুতা & Comment)</span></div>
+                <div class="items-strip" id="sleeve-items-strip"></div>
+              </div>
+
+              <div class="drawing-group">
+                <div class="drawing-group-title"><span>Button Plate (Select, ১ সুতা & Comment)</span></div>
+                <div class="items-strip" id="button-plate-strip"></div>
+              </div>
+
+              <div class="drawing-group">
+                <div class="drawing-group-title"><span>Pockets (১ সুতা), Body, Pen & Mobile</span></div>
+                <div class="items-strip" id="pocket-items-strip" style="margin-bottom: 10px;"></div>
+
+                <div class="body-diagram-box" style="margin-bottom: 10px;">
+                  <div style="font-size: 0.75rem; font-weight: 700; margin-bottom: 4px;">Thobe Body (No Tick / No Comment)</div>
+                  <svg width="96" height="100" viewBox="0 0 110 115">
+                    <path d="M25 14 L52 14 L64 26 L78 16 L96 42 L80 54 L72 40 L72 106 L34 106 L34 40 L25 54 L14 42 Z" fill="#fff" stroke="#0f172a" stroke-width="2.4" stroke-linejoin="round"/>
+                    <path d="M36 14 Q52 34 66 14" fill="none" stroke="#0f172a" stroke-width="2.2"/>
+                    <rect x="40" y="34" width="16" height="20" fill="#fff" stroke="#0f172a" stroke-width="2"/>
+                    <line x1="40" y1="40" x2="56" y2="40" stroke="#0f172a" stroke-width="1.8"/>
+                    <line x1="52" y1="24" x2="52" y2="62" stroke="#0f172a" stroke-width="1.6"/>
+                  </svg>
+                </div>
+
+                <div class="items-strip" id="pen-mobile-strip"></div>
+              </div>
+            </div>
+          </div>
+
+          <h3 style="margin: 18px 0 10px; font-size: 1rem; color: var(--primary);">Fabric & Color (Catalog Synced + Custom)</h3>
+          <div class="grid-form">
+            <div class="form-group">
+              <label>Fabric Source</label>
+              <select id="fab-source" onchange="toggleFabricDropdown()">
+                <option value="Shop Fabric">Shop Fabric</option>
+                <option value="Customer Fabric">Customer's Own Fabric</option>
+              </select>
+            </div>
+            <div class="form-group" id="fab-select-wrap">
+              <label>Select Fabric & Color from Catalog</label>
+              <select id="fab-catalog-select" onchange="toggleCustomCatalogInput()"></select>
+            </div>
+            <div class="form-group" id="fab-custom-catalog-wrap" style="display:none;">
+              <label>Write Custom Fabric & Color *</label>
+              <input type="text" id="fab-custom-catalog-input" placeholder="Custom Fabric & Color" />
+            </div>
+            <div class="form-group">
+              <label>Custom Color / Fabric Note</label>
+              <input type="text" id="fab-custom-note" placeholder="Optional note" />
+            </div>
+          </div>
+
+          <h3 style="margin: 18px 0 10px; font-size: 1rem; color: var(--primary);">Thobe Quantity & Payment (عدد الأثواب والقيمة)</h3>
+          <div class="grid-form sensitive-finance">
+            <div class="form-group">
+              <label>Thobe Quantity (عدد الأثواب) *</label>
+              <input type="number" id="thobe-qty" value="1" min="1" />
+            </div>
+            <div class="form-group">
+              <label>Total Price (القيمة الإجمالية) *</label>
+              <input type="number" step="any" id="pay-total" oninput="updateDueCalc()" placeholder="0" />
+            </div>
+            <div class="form-group">
+              <label>Advance / Deposit (المدفوع) *</label>
+              <input type="number" step="any" id="pay-advance" oninput="updateDueCalc()" placeholder="0" />
+            </div>
+            <div class="form-group">
+              <label>Balance Due (الباقي)</label>
+              <input type="number" id="pay-due" readonly value="0" />
+            </div>
+            <div class="form-group">
+              <label>Payment Method</label>
+              <select id="pay-method">
+                <option value="Cash">Cash</option>
+                <option value="Seva Card">Seva Card</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="grid-form" style="margin-top: 14px;">
+            <div class="form-group">
+              <label>Attach Physical Invoice Photo (Camera / File)</label>
+              <div class="photo-btn-row">
+                <label class="camera-trigger-btn">
+                  📷 Take Photo
+                  <input type="file" id="phys-camera-input" accept="image/*" capture="environment" style="display:none;" onchange="handleInvoicePhotoSelect(this)" />
+                </label>
+                <label class="gallery-trigger-btn">
+                  📁 Choose File
+                  <input type="file" id="phys-photo-input" accept="image/*" style="display:none;" onchange="handleInvoicePhotoSelect(this)" />
+                </label>
+              </div>
+              <div id="photo-preview-box" style="margin-top: 6px;"></div>
+            </div>
+            <div class="form-group">
+              <label>Remarks (ملاحظات)</label>
+              <textarea id="order-remarks" rows="2" placeholder="Remarks"></textarea>
+            </div>
+          </div>
+
+          <div style="margin-top: 18px; display: flex; gap: 10px; flex-wrap: wrap;">
+            <button type="button" class="btn-primary" onclick="triggerAnim(this, 'animate-save', saveAndPreviewOrder)">Save Order & Preview Invoice</button>
+            <button type="button" class="btn-secondary" onclick="triggerAnim(this, 'animate-click', resetOrderForm)">Reset</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- ==================== 3. SEARCH CUSTOMER TAB ==================== -->
+    <div id="tab-search" class="tab-section hidden">
+      <div class="card">
+        <div class="card-title">
+          <span>Search Customers & Orders</span>
+          <div style="display:flex; gap:8px; align-items:center;">
+            <button type="button" class="btn-secondary btn-sm" onclick="triggerAnim(this, 'animate-click', () => exportOrdersCSV('all'))">⬇ Download All CSV</button>
+            <span id="total-orders-badge" class="badge badge-approved">0 Orders</span>
+          </div>
+        </div>
+        <input type="text" id="search-box" placeholder="Search by customer name, phone number, invoice no, or ID-0001..." style="width: 100%; margin-bottom: 16px;" oninput="renderOrderList()" />
+        <div id="orders-container"></div>
+      </div>
+    </div>
+
+    <!-- ==================== 4. ALTERATION TRACK TAB ==================== -->
+    <div id="tab-alteration" class="tab-section hidden">
+      <div class="card">
+        <div class="card-title">
+          <span>Alteration Track & Main Measurement Auto-Update</span>
+        </div>
+
+        <div class="alt-mode-bar">
+          <button type="button" id="alt-tab-create" class="btn-secondary" onclick="switchAltSection('create')">
+            New Alteration Request
+          </button>
+          <button type="button" id="alt-tab-requests" class="btn-primary" onclick="switchAltSection('requests')">
+            Incoming Requests (<span id="pending-alt-badge-num">0</span>)
+          </button>
+        </div>
+
+        <div id="alt-section-create" class="alt-panel hidden animate-fade">
+          <div class="alt-panel-title">
+            <span id="alt-form-heading">New Alteration Request (Full Order & Measurement Menu)</span>
+            <button type="button" class="btn-secondary btn-sm" onclick="resetAlterationForm()">Reset Form</button>
+          </div>
+
+          <form id="alteration-form" novalidate onsubmit="event.preventDefault();">
+            <input type="hidden" id="edit-alt-id" />
+
+            <div class="grid-form" style="margin-bottom: 14px;">
+              <div class="form-group">
+                <label>Find Existing Order by ID / Name / Phone</label>
+                <input type="text" id="alt-order-search" placeholder="Type ID-0001, invoice no, name, or phone..." oninput="populateAlterationDropdown()" />
+              </div>
+              <div class="form-group">
+                <label>Select Existing Order (Auto-Load Full Details)</label>
+                <select id="alt-customer-select" onchange="loadSelectedOrderIntoAltForm()"></select>
+              </div>
+              <div class="form-group">
+                <label>Alteration Notes / Request Reason *</label>
+                <input type="text" id="alt-note" placeholder="e.g. Shorten length by 1 inch, adjust sleeve & collar..." />
+              </div>
+            </div>
+
+            <div class="grid-form">
+              <div class="form-group">
+                <label>System Serial Invoice ID</label>
+                <div class="serial-pill" id="alt-serial-id-display">ID-0001</div>
+              </div>
+              <div class="form-group">
+                <label>Manual Invoice No</label>
+                <input type="text" id="alt-inv-no" placeholder="0000" />
+              </div>
+              <div class="form-group">
+                <label>Customer Name (الاسم) *</label>
+                <input type="text" id="alt-cust-name" class="sensitive-customer" placeholder="Customer Name" />
+              </div>
+              <div class="form-group">
+                <label>Mobile Number (جوال العميل) *</label>
+                <div class="phone-wrap sensitive-customer">
+                  <span>+966</span>
+                  <input type="tel" id="alt-cust-phone" placeholder="5XXXXXXXX" />
+                </div>
+              </div>
+              <div class="form-group">
+                <label>Received Date (تاريخ الاستلام)</label>
+                <input type="date" id="alt-rec-date" onchange="recalcAltDeliveryFromOption()" />
+              </div>
+              <div class="form-group">
+                <label>Auto Delivery Days Option</label>
+                <select id="alt-del-days-select" onchange="recalcAltDeliveryFromOption()">
+                  <option value="5">5 Days Later</option>
+                  <option value="7">7 Days Later</option>
+                  <option value="8" selected>8 Days Later</option>
+                  <option value="10">10 Days Later</option>
+                  <option value="custom">Custom Days / Manual Date</option>
+                </select>
+              </div>
+              <div class="form-group" id="alt-custom-days-wrap" style="display:none;">
+                <label>Custom Days After Received Date</label>
+                <input type="number" id="alt-custom-del-days" min="1" value="0" oninput="applyAltCustomDays()" />
+              </div>
+              <div class="form-group">
+                <label>Delivery Date (تاريخ التسليم)</label>
+                <input type="date" id="alt-del-date" />
+              </div>
+            </div>
+
+            <h3 style="margin: 18px 0 10px; font-size: 1rem; color: var(--primary);">المقاس / Measurement (১ সুতা — / +)</h3>
+            <div class="measure-grid">
+              <div class="measure-card">
+                <div class="ar">الطول</div>
+                <div class="en">Length</div>
+                <input type="number" step="any" id="alt-length" placeholder="0.0" />
+                <div class="suta-stepper" id="stepper-alt-length"></div>
+              </div>
+              <div class="measure-card">
+                <div class="ar">الكتف</div>
+                <div class="en">Shoulder</div>
+                <input type="number" step="any" id="alt-shoulder" placeholder="0.0" />
+                <div class="suta-stepper" id="stepper-alt-shoulder"></div>
+              </div>
+              <div class="measure-card">
+                <div class="ar">الكم</div>
+                <div class="en">Fullsleeve</div>
+                <input type="number" step="any" id="alt-sleeve" placeholder="0.0" />
+                <div class="suta-stepper" id="stepper-alt-sleeve"></div>
+              </div>
+              <div class="measure-card">
+                <div class="ar">الصدر</div>
+                <div class="en">Chest</div>
+                <input type="number" step="any" id="alt-chest" placeholder="0.0" />
+                <div class="suta-stepper" id="stepper-alt-chest"></div>
+              </div>
+              <div class="measure-card">
+                <div class="ar">الوسع</div>
+                <div class="en">Widen</div>
+                <input type="number" step="any" id="alt-widen" placeholder="0.0" />
+                <div class="suta-stepper" id="stepper-alt-widen"></div>
+              </div>
+              <div class="measure-card">
+                <div class="ar">الرقبة</div>
+                <div class="en">Neck</div>
+                <input type="number" step="any" id="alt-neck" placeholder="0.0" />
+                <div class="suta-stepper" id="stepper-alt-neck"></div>
+              </div>
+              <div class="measure-card">
+                <div class="ar">الذيل</div>
+                <div class="en">Hem</div>
+                <input type="number" step="any" id="alt-hem" placeholder="0.0" />
+                <div class="suta-stepper" id="stepper-alt-hem"></div>
+              </div>
+            </div>
+
+            <div class="extra-measure-box">
+              <div class="sub-panel">
+                <h4>Fullsleeve Detailed Measurements (Top / Middle / Bottom + ১ সুতা — / +)</h4>
+                <div class="mini-input-row">
+                  <div class="mini-field">
+                    <span>Top</span>
+                    <input type="number" step="any" id="alt-sl-top" placeholder="0.0" />
+                    <div class="suta-stepper" id="stepper-alt-sl-top"></div>
+                  </div>
+                  <div class="mini-field">
+                    <span>Middle</span>
+                    <input type="number" step="any" id="alt-sl-mid" placeholder="0.0" />
+                    <div class="suta-stepper" id="stepper-alt-sl-mid"></div>
+                  </div>
+                  <div class="mini-field">
+                    <span>Bottom</span>
+                    <input type="number" step="any" id="alt-sl-bot" placeholder="0.0" />
+                    <div class="suta-stepper" id="stepper-alt-sl-bot"></div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="sub-panel">
+                <h4>Body Measurements (Sadar Kamel & Hip + ১ সুতা — / +)</h4>
+                <div class="mini-input-row two-col">
+                  <div class="mini-field">
+                    <span>Sadar Kamel</span>
+                    <input type="number" step="any" id="alt-bd-chest" placeholder="0.0" />
+                    <div class="suta-stepper" id="stepper-alt-bd-chest"></div>
+                  </div>
+                  <div class="mini-field">
+                    <span>Hip</span>
+                    <input type="number" step="any" id="alt-bd-hip" placeholder="0.0" />
+                    <div class="suta-stepper" id="stepper-alt-bd-hip"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="diagram-sheet">
+              <div class="diagram-header">
+                <div>
+                  <strong>Invoice Drawing & Style Sheet</strong>
+                  <div style="font-size: 0.78rem; color: var(--muted);">
+                    Select or update Thobe Type, Collars, Sleeves, Button Plate, Pockets, Pen/Mobile, ১ সুতা (— / +) & comments.
+                  </div>
+                </div>
+              </div>
+
+              <div class="diagram-grid">
+                <div class="drawing-group">
+                  <div class="drawing-group-title"><span>Thobe Type / النوع (Select & Comment)</span></div>
+                  <div class="items-strip" id="alt-type-items-strip"></div>
+                </div>
+
+                <div class="drawing-group">
+                  <div class="drawing-group-title"><span>Collars (Select, ১ সুতা & Comment)</span></div>
+                  <div class="items-strip" id="alt-collar-items-strip"></div>
+                </div>
+
+                <div class="drawing-group">
+                  <div class="drawing-group-title"><span>Sleeves (Select, ১ সুতা & Comment)</span></div>
+                  <div class="items-strip" id="alt-sleeve-items-strip"></div>
+                </div>
+
+                <div class="drawing-group">
+                  <div class="drawing-group-title"><span>Button Plate (Select, ১ সুতা & Comment)</span></div>
+                  <div class="items-strip" id="alt-button-plate-strip"></div>
+                </div>
+
+                <div class="drawing-group">
+                  <div class="drawing-group-title"><span>Pockets (১ সুতা), Body, Pen & Mobile</span></div>
+                  <div class="items-strip" id="alt-pocket-items-strip" style="margin-bottom: 10px;"></div>
+
+                  <div class="body-diagram-box" style="margin-bottom: 10px;">
+                    <div style="font-size: 0.75rem; font-weight: 700; margin-bottom: 4px;">Thobe Body (No Tick / No Comment)</div>
+                    <svg width="96" height="100" viewBox="0 0 110 115">
+                      <path d="M25 14 L52 14 L64 26 L78 16 L96 42 L80 54 L72 40 L72 106 L34 106 L34 40 L25 54 L14 42 Z" fill="#fff" stroke="#0f172a" stroke-width="2.4" stroke-linejoin="round"/>
+                      <path d="M36 14 Q52 34 66 14" fill="none" stroke="#0f172a" stroke-width="2.2"/>
+                      <rect x="40" y="34" width="16" height="20" fill="#fff" stroke="#0f172a" stroke-width="2"/>
+                      <line x1="40" y1="40" x2="56" y2="40" stroke="#0f172a" stroke-width="1.8"/>
+                      <line x1="52" y1="24" x2="52" y2="62" stroke="#0f172a" stroke-width="1.6"/>
+                    </svg>
+                  </div>
+
+                  <div class="items-strip" id="alt-pen-mobile-strip"></div>
+                </div>
+              </div>
+            </div>
+
+            <h3 style="margin: 18px 0 10px; font-size: 1rem; color: var(--primary);">Fabric & Color (Catalog Synced + Custom)</h3>
+            <div class="grid-form">
+              <div class="form-group">
+                <label>Fabric Source</label>
+                <select id="alt-fab-source" onchange="toggleAltFabricDropdown()">
+                  <option value="Shop Fabric">Shop Fabric</option>
+                  <option value="Customer Fabric">Customer's Own Fabric</option>
+                </select>
+              </div>
+              <div class="form-group" id="alt-fab-select-wrap">
+                <label>Select Fabric & Color from Catalog</label>
+                <select id="alt-fab-catalog-select" onchange="toggleAltCustomCatalogInput()"></select>
+              </div>
+              <div class="form-group" id="alt-fab-custom-catalog-wrap" style="display:none;">
+                <label>Write Custom Fabric & Color *</label>
+                <input type="text" id="alt-fab-custom-catalog-input" placeholder="Custom Fabric & Color" />
+              </div>
+              <div class="form-group">
+                <label>Custom Color / Fabric Note</label>
+                <input type="text" id="alt-fab-custom-note" placeholder="Optional note" />
+              </div>
+            </div>
+
+            <h3 style="margin: 18px 0 10px; font-size: 1rem; color: var(--primary);">Thobe Quantity & Payment (عدد الأثواب والقيمة)</h3>
+            <div class="grid-form sensitive-finance">
+              <div class="form-group">
+                <label>Thobe Quantity (عدد الأثواب) *</label>
+                <input type="number" id="alt-thobe-qty" value="1" min="1" />
+              </div>
+              <div class="form-group">
+                <label>Total Price (القيمة الإجمالية) *</label>
+                <input type="number" step="any" id="alt-pay-total" oninput="updateAltDueCalc()" placeholder="0" />
+              </div>
+              <div class="form-group">
+                <label>Advance / Deposit (المدفوع) *</label>
+                <input type="number" step="any" id="alt-pay-advance" oninput="updateAltDueCalc()" placeholder="0" />
+              </div>
+              <div class="form-group">
+                <label>Balance Due (الباقي)</label>
+                <input type="number" id="alt-pay-due" readonly value="0" />
+              </div>
+              <div class="form-group">
+                <label>Payment Method</label>
+                <select id="alt-pay-method">
+                  <option value="Cash">Cash</option>
+                  <option value="Seva Card">Seva Card</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="grid-form" style="margin-top: 14px;">
+              <div class="form-group">
+                <label>Attach Physical Invoice Photo (Camera / File)</label>
+                <div class="photo-btn-row">
+                  <label class="camera-trigger-btn">
+                    📷 Take Photo
+                    <input type="file" id="alt-phys-camera-input" accept="image/*" capture="environment" style="display:none;" onchange="handleAltPhotoSelect(this)" />
+                  </label>
+                  <label class="gallery-trigger-btn">
+                    📁 Choose File
+                    <input type="file" id="alt-phys-photo-input" accept="image/*" style="display:none;" onchange="handleAltPhotoSelect(this)" />
+                  </label>
+                </div>
+                <div id="alt-photo-preview-box" style="margin-top: 6px;"></div>
+              </div>
+              <div class="form-group">
+                <label>Remarks (ملاحظات)</label>
+                <textarea id="alt-order-remarks" rows="2" placeholder="Remarks"></textarea>
+              </div>
+            </div>
+
+            <div style="margin-top: 18px; display:flex; gap:10px; flex-wrap:wrap;">
+              <button type="button" id="alt-submit-btn" class="btn-primary" onclick="saveAlterationRequest()">Alteration Request</button>
+              <button type="button" class="btn-secondary" onclick="resetAlterationForm()">Clear</button>
+            </div>
+          </form>
+        </div>
+
+        <div id="alt-section-requests" class="alt-panel animate-fade">
+          <div class="alt-panel-title">
+            <span>Incoming Alteration Requests</span>
+            <div style="display:flex; gap:6px; flex-wrap:wrap; align-items:center;">
+              <button type="button" id="alt-filter-pending" class="btn-primary btn-sm" onclick="setAltFilter('pending')">Pending (<span id="pending-alt-count">0</span>)</button>
+              <button type="button" id="alt-filter-approved" class="btn-secondary btn-sm" onclick="setAltFilter('approved')">Approved</button>
+              <button type="button" id="alt-filter-all" class="btn-secondary btn-sm" onclick="setAltFilter('all')">All</button>
+            </div>
+          </div>
+          <p style="font-size: 0.85rem; color: var(--muted); margin-bottom: 12px;">
+            Requests stay here until you click <b>Customer OK — Approve & Update Main</b>. Use <b>Full Preview</b> to inspect everything or <b>Edit Request</b> if any field or measurement needs correction.
+          </p>
+          <div id="alteration-list"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== 5. FABRIC & COLOR CATALOG TAB ==================== -->
+    <div id="tab-catalog" class="tab-section hidden">
+      <div class="card">
+        <div class="card-title">
+          <span>Fabric & Color Catalog</span>
+        </div>
+        <form id="catalog-form" style="background: #f8fafc; padding: 14px; border-radius: 10px; border: 1px solid #e2e8f0; margin-bottom: 18px;">
+          <div class="grid-form">
+            <div class="form-group">
+              <label>Country / Origin *</label>
+              <input type="text" id="cat-origin" required placeholder="Japan" />
+            </div>
+            <div class="form-group">
+              <label>Fabric Type / Name *</label>
+              <input type="text" id="cat-type" required placeholder="Toyobo" />
+            </div>
+            <div class="form-group">
+              <label>Color *</label>
+              <input type="text" id="cat-color" required placeholder="Pure White" />
+            </div>
+            <div class="form-group">
+              <label>Fabric Photo</label>
+              <input type="file" id="cat-photo-file" accept="image/*" capture="environment" />
+            </div>
+          </div>
+          <button type="submit" id="cat-submit-btn" class="btn-primary" style="margin-top: 12px;">+ Add Fabric to Catalog</button>
+        </form>
+
+        <div class="catalog-grid" id="catalog-container"></div>
+      </div>
+    </div>
+
+    <!-- ==================== 6. MONTHLY STATEMENT TAB ==================== -->
+    <div id="tab-statement" class="tab-section hidden">
+      <div class="card">
+        <div class="card-title">
+          <span>Monthly Financial Statement & Payment Status</span>
+          <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+            <input type="month" id="month-picker" onchange="renderMonthlyStatement()" />
+            <button type="button" class="btn-secondary btn-sm" onclick="triggerAnim(this, 'animate-click', () => exportOrdersCSV('daily'))">Daily CSV</button>
+            <button type="button" class="btn-secondary btn-sm" onclick="triggerAnim(this, 'animate-click', () => exportOrdersCSV('weekly'))">Weekly CSV</button>
+            <button type="button" class="btn-primary btn-sm" onclick="triggerAnim(this, 'animate-save', () => exportOrdersCSV('monthly'))">Monthly CSV</button>
+          </div>
+        </div>
+
+        <div class="stats-grid sensitive-finance" style="margin-bottom: 16px;">
+          <div class="stat-box highlight"><div class="label">Total Orders</div><div class="value" id="ms-orders">0</div></div>
+          <div class="stat-box highlight"><div class="label">Total Thobes</div><div class="value" id="ms-thobes">0</div></div>
+          <div class="stat-box green"><div class="label">Total Billed</div><div class="value" id="ms-total">0 SAR</div></div>
+          <div class="stat-box green"><div class="label">Total Collected</div><div class="value" id="ms-paid">0 SAR</div></div>
+          <div class="stat-box"><div class="label">Cash Collected</div><div class="value" id="ms-cash">0 SAR</div></div>
+          <div class="stat-box"><div class="label">Seva Card Collected</div><div class="value" id="ms-online">0 SAR</div></div>
+          <div class="stat-box orange"><div class="label">Total Balance Due</div><div class="value" id="ms-due">0 SAR</div></div>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Order ID & Customer</th>
+                <th>Qty</th>
+                <th class="sensitive-finance">Total</th>
+                <th class="sensitive-finance">Paid / Due</th>
+                <th class="sensitive-finance">Payment Status</th>
+                <th class="sensitive-finance">Method</th>
+              </tr>
+            </thead>
+            <tbody id="statement-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== 7. OFFER SENDER TAB ==================== -->
+    <div id="tab-offers" class="tab-section hidden">
+      <div class="card">
+        <div class="card-title">
+          <span>Customer Offer Sender (WhatsApp)</span>
+        </div>
+        <div class="form-group" style="margin-bottom: 14px;">
+          <label>Promotional Message Template (use {name} for customer name):</label>
+          <textarea id="offer-template" rows="4">Assalamu Alaikum {name},
+New thobe fabrics have arrived at Al-Ada'a Al-Shamikh For Men's Tailoring. Visit us for custom tailoring and seasonal offers.</textarea>
+        </div>
+        <div id="offer-customer-list"></div>
+      </div>
+    </div>
+
+    <!-- ==================== PRINTABLE INVOICE VIEW ==================== -->
+    <div id="invoice-modal" class="card hidden animate-fade">
+      <div class="no-print" style="display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; margin-bottom: 14px;">
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+          <button type="button" class="btn-primary" onclick="triggerAnim(this, 'animate-click', window.print)">Print Invoice</button>
+          <button type="button" class="btn-whatsapp" id="inv-wa-share-btn">Share WhatsApp</button>
+          <button type="button" class="btn-secondary" id="inv-download-btn">Download Record</button>
+        </div>
+        <button type="button" class="btn-secondary" onclick="triggerAnim(this, 'animate-click', closeInvoiceAndGoHome)">Close</button>
+      </div>
+
+      <div class="invoice-sheet" id="invoice-print-area">
+        <div class="inv-top-header">
+          <div>
+            <strong style="font-size: 1.15rem;">Al-Ada'a Al-Shamikh</strong><br/>
+            <span>For Men's Tailoring</span><br/>
+            <small>Riyadh - Al Naseem District | Mob: 0541141052</small>
+          </div>
+          <div class="inv-box-title">
+            فاتورة خياطة<br/>Tailoring Invoice<br/>
+            <span id="p-inv-no" style="font-size: 1.05rem;">#0000</span> | <span id="p-serial-id" style="font-size: 0.95rem;">ID-0001</span>
+          </div>
+          <div style="text-align: right;">
+            <strong style="font-size: 1.25rem;">الأداء الشامخ</strong><br/>
+            <span>للخياطة الرجالية</span><br/>
+            <small>الرياض - حي النسيم | جوال: ٠٥٤١١٤١٠٥٢</small>
+          </div>
+        </div>
+
+        <table class="inv-grid-table">
+          <tr>
+            <td><strong>Customer / الاسم:</strong> <span id="p-name" class="sensitive-customer"></span></td>
+            <td><strong>Mobile / الجوال:</strong> <span id="p-phone" class="sensitive-customer"></span></td>
+            <td><strong>Qty / عدد الأثواب:</strong> <span id="p-qty"></span></td>
+          </tr>
+          <tr>
+            <td><strong>Received / الاستلام:</strong> <span id="p-rec"></span></td>
+            <td><strong>Delivery / التسليم:</strong> <span id="p-del"></span></td>
+            <td><strong>Fabric & Color:</strong> <span id="p-fabric"></span></td>
+          </tr>
+        </table>
+
+        <table class="inv-grid-table customer-invoice-hide-measurements">
+          <thead>
+            <tr>
+              <th>الطول<br/>Length</th>
+              <th>الكتف<br/>Shoulder</th>
+              <th>الكم<br/>Fullsleeve</th>
+              <th>الصدر<br/>Chest</th>
+              <th>الوسع<br/>Widen</th>
+              <th>الرقبة<br/>Neck</th>
+              <th>الذيل<br/>Hem</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr style="font-size: 1.05rem; font-weight: 700;">
+              <td id="p-m-length"></td>
+              <td id="p-m-shoulder"></td>
+              <td id="p-m-sleeve"></td>
+              <td id="p-m-chest"></td>
+              <td id="p-m-widen"></td>
+              <td id="p-m-neck"></td>
+              <td id="p-m-hem"></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <table class="inv-grid-table">
+          <tr class="customer-invoice-hide-measurements">
+            <td><strong>Sleeve (Top / Mid / Bot):</strong> <span id="p-sleeve-extra"></span></td>
+            <td><strong>Body (Sadar Kamel / Hip):</strong> <span id="p-body-extra"></span></td>
+          </tr>
+          <tr>
+            <td colspan="2" style="text-align: left;"><strong>Selected Type, Styles, ১ সুতা & Comments:</strong> <span id="p-drawings-summary"></span></td>
+          </tr>
+          <tr>
+            <td colspan="2" style="text-align: left;"><strong>Remarks / ملاحظات:</strong> <span id="p-remarks"></span></td>
+          </tr>
+          <tr class="sensitive-finance">
+            <td><strong>Total / القيمة:</strong> <span id="p-total"></span> SAR</td>
+            <td><strong>Advance / المدفوع:</strong> <span id="p-adv"></span> SAR | <strong>Balance / الباقي:</strong> <span id="p-due"></span> SAR (<span id="p-method"></span>)</td>
+          </tr>
+        </table>
+
+        <div id="p-photo-container" style="text-align: center; margin-top: 8px;"></div>
+
+        <div class="tear-line"><span>✂ Customer Receipt / إيصال العميل ✂</span></div>
+
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+          <div>
+            <strong>الأداء الشامخ للخياطة الرجالية</strong> — الرياض - حي النسيم (٠٥٤١١٤١٠٥٢)
+          </div>
+          <div><strong>Invoice: <span id="p2-inv-no"></span> (<span id="p2-serial-id"></span>)</strong></div>
+        </div>
+        <table class="inv-grid-table">
+          <tr>
+            <td><strong>Name:</strong> <span id="p2-name" class="sensitive-customer"></span></td>
+            <td><strong>Mobile:</strong> <span id="p2-phone" class="sensitive-customer"></span></td>
+            <td><strong>Delivery:</strong> <span id="p2-del"></span></td>
+          </tr>
+          <tr>
+            <td colspan="3"><strong>Fabric & Color:</strong> <span id="p2-fabric"></span></td>
+          </tr>
+          <tr class="sensitive-finance">
+            <td><strong>Total:</strong> <span id="p2-total"></span> SAR</td>
+            <td><strong>Advance:</strong> <span id="p2-adv"></span> SAR</td>
+            <td><strong>Balance:</strong> <span id="p2-due"></span> SAR</td>
+          </tr>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Application Logic -->
+  <script>
+    let orders = JSON.parse(localStorage.getItem('thobe_orders') || '[]');
+    let catalog = JSON.parse(localStorage.getItem('thobe_catalog') || '[]');
+    let alterations = JSON.parse(localStorage.getItem('thobe_alterations') || '[]');
+    let serialCounter = parseInt(localStorage.getItem('thobe_serial_counter') || '0', 10);
+    let pendingInvoicePhotoBase64 = '';
+    let pendingAltPhotoBase64 = '';
+    let activeInvoiceOrderId = null;
+
+    let activeAltSection = 'requests';
+    let altFilterMode = 'pending';
+    let expandedAltId = null;
+
+    let lastDeletedOrder = null;
+    let lastDeletedAlterations = [];
+    let undoTimer = null;
+
+    let generatedRecoveryCode = '';
+    let generatedSettingsEmailCode = '';
+
+    let currentlyExpandedId = null;
+
+    // ==================== ১ সুতা (1 Suta) STEPPER LOGIC ====================
+    // 1 Suta = 1/8 inch = 0.125
+    const SUTA_STEP = 0.125;
+    const SUTA_MIN_STEPS = -8;
+    const SUTA_MAX_STEPS = 8;
+
+    const MEASUREMENT_STEPPER_KEYS = [
+      'm-length', 'm-shoulder', 'm-sleeve', 'm-chest',
+      'm-widen', 'm-neck', 'm-hem',
+      'sl-top', 'sl-mid', 'sl-bot',
+      'bd-chest', 'bd-hip',
+      'alt-length', 'alt-shoulder', 'alt-sleeve', 'alt-chest',
+      'alt-widen', 'alt-neck', 'alt-hem',
+      'alt-sl-top', 'alt-sl-mid', 'alt-sl-bot',
+      'alt-bd-chest', 'alt-bd-hip'
+    ];
+
+    let sutaStepsState = {};
+
+    function resetAllSutaSteps() {
+      sutaStepsState = {};
+      MEASUREMENT_STEPPER_KEYS.forEach(k => {
+        sutaStepsState[k] = 0;
+        renderMeasurementStepper(k);
+      });
+    }
+
+    function formatSutaBadgeText(steps) {
+      const n = Number(steps) || 0;
+      if (n === 0) return '১ সুতা: 0';
+      const sign = n > 0 ? '+' : '-';
+      const absN = Math.abs(n);
+      const dec = (n * SUTA_STEP).toFixed(3).replace(/\.?0+$/, '');
+      return `১ সুতা: ${sign}${absN} (${sign}${dec})`;
+    }
+
+    function formatSutaShortText(steps) {
+      const n = Number(steps) || 0;
+      if (n === 0) return '';
+      const sign = n > 0 ? '+' : '-';
+      const absN = Math.abs(n);
+      const dec = (n * SUTA_STEP).toFixed(3).replace(/\.?0+$/, '');
+      return `${sign}${absN} সুতা (${sign}${dec})`;
+    }
+
+    function renderMeasurementStepper(key) {
+      const container = document.getElementById(`stepper-${key}`);
+      if (!container) return;
+      const steps = sutaStepsState[key] || 0;
+      container.innerHTML = `
+        <button type="button" class="suta-btn" onclick="stepMeasurementSuta('${key}', -1)" title="Decrease 1 Suta (—)">—</button>
+        <span class="suta-readout">${formatSutaBadgeText(steps)}</span>
+        <button type="button" class="suta-btn" onclick="stepMeasurementSuta('${key}', 1)" title="Increase 1 Suta (+)">+</button>
+      `;
+    }
+
+    function stepMeasurementSuta(key, delta) {
+      const cur = sutaStepsState[key] || 0;
+      const next = Math.max(SUTA_MIN_STEPS, Math.min(SUTA_MAX_STEPS, cur + delta));
+      sutaStepsState[key] = next;
+      renderMeasurementStepper(key);
+    }
+
+    function formatValWithSutaSteps(val, steps) {
+      const v = (val === undefined || val === null || val === '') ? '-' : String(val);
+      const sText = formatSutaShortText(steps);
+      if (!sText) return v;
+      return v === '-' ? sText : `${v} [${sText}]`;
+    }
+
+    // Add or subtract 1 Suta on a number inside a comment box (e.g., "33" -> "33.125" or updates numeric value in text)
+    function applySutaToCommentValue(id, delta, prefix = 'order') {
+      const isAlt = prefix === 'alt';
+      const stateObj = isAlt ? altDrawingState : drawingState;
+      const st = stateObj[id];
+      if (!st) return;
+
+      st.checked = true;
+      st.commentOpen = true;
+      if (isAlt) currentlyExpandedAltId = id; else currentlyExpandedId = id;
+
+      const currentText = (st.comment || '').trim();
+      const match = currentText.match(/-?\d+(\.\d+)?/);
+      if (match) {
+        const oldNum = parseFloat(match[0]);
+        const newNum = Number((oldNum + delta * SUTA_STEP).toFixed(3));
+        st.comment = currentText.replace(match[0], String(newNum));
+      } else {
+        const baseVal = Number((delta * SUTA_STEP).toFixed(3));
+        st.comment = currentText ? `${currentText} ${baseVal}` : String(baseVal);
+      }
+
+      if (isAlt) renderAllAltDrawingStrips(); else renderAllDrawingStrips();
+    }
+
+    orders = orders.map((o, i) => {
+      const normalizedMethod = o.paymentMethod === 'Seva Pay' ? 'Seva Card' : (o.paymentMethod || 'Cash');
+      if (!o.serialId) {
+        const num = orders.length - i;
+        return { ...o, qty: parseInt(o.qty, 10) || 1, paymentMethod: normalizedMethod, serialId: 'ID-' + String(num).padStart(4, '0') };
+      }
+      return { ...o, qty: parseInt(o.qty, 10) || 1, paymentMethod: normalizedMethod };
+    });
+    if (serialCounter < orders.length) {
+      serialCounter = orders.length;
+    }
+
+    if (catalog.length === 0) {
+      catalog = [
+        { id: 'c1', origin: 'Japan', type: 'Toyobo Super', color: 'Pure White', photo: '', active: true },
+        { id: 'c2', origin: 'Japan', type: 'Shikibo', color: 'Off-White / Cream', photo: '', active: true },
+        { id: 'c3', origin: 'Korea', type: 'Luxury Tetoron', color: 'Navy Blue', photo: '', active: true }
+      ];
+      localStorage.setItem('thobe_catalog', JSON.stringify(catalog));
+    }
+
+    function triggerAnim(el, animClass, callback) {
+      if (el) {
+        el.classList.remove(animClass);
+        void el.offsetWidth;
+        el.classList.add(animClass);
+        setTimeout(() => {
+          el.classList.remove(animClass);
+        }, 450);
+      }
+      if (typeof callback === 'function') {
+        setTimeout(callback, 140);
+      }
+    }
+
+    function saveLocal() {
+      localStorage.setItem('thobe_orders', JSON.stringify(orders));
+      localStorage.setItem('thobe_catalog', JSON.stringify(catalog));
+      localStorage.setItem('thobe_alterations', JSON.stringify(alterations));
+      localStorage.setItem('thobe_serial_counter', String(serialCounter));
+    }
+
+    function getNextSerialId() {
+      return 'ID-' + String(serialCounter + 1).padStart(4, '0');
+    }
+
+    function refreshSerialDisplay() {
+      const editId = document.getElementById('edit-order-id').value;
+      if (editId) {
+        const existing = orders.find(o => o.id === editId);
+        document.getElementById('next-serial-id-display').textContent = existing ? existing.serialId : getNextSerialId();
+      } else {
+        document.getElementById('next-serial-id-display').textContent = getNextSerialId();
+      }
+    }
+
+    // ==================== SETTINGS MODAL & VERIFIED EMAIL ====================
+    function refreshEmailDisplay() {
+      const verifiedEmail = localStorage.getItem('verified_recovery_email') || '';
+      const statusEl = document.getElementById('recovery-email-status');
+      const badgeEl = document.getElementById('settings-verified-email-badge');
+      const recInput = document.getElementById('recovery-email-input');
+
+      if (verifiedEmail) {
+        statusEl.textContent = `Verified Email: ${verifiedEmail}`;
+        badgeEl.textContent = `Current Verified Email: ${verifiedEmail}`;
+        if (recInput && !recInput.value) recInput.value = verifiedEmail;
+      } else {
+        statusEl.textContent = 'No verified email saved yet. Enter an email below to send a verification code.';
+        badgeEl.textContent = 'Current Verified Email: None (Add & verify an email below)';
+      }
+    }
+
+    function openSettingsModal() {
+      refreshEmailDisplay();
+      document.getElementById('settings-email-input').value = localStorage.getItem('verified_recovery_email') || '';
+      document.getElementById('settings-email-code').value = '';
+      document.getElementById('settings-email-code-hint').textContent = '';
+      document.getElementById('settings-modal').classList.remove('hidden');
+    }
+
+    function closeSettingsModal() {
+      document.getElementById('settings-modal').classList.add('hidden');
+    }
+
+    function sendSettingsEmailCode() {
+      const email = document.getElementById('settings-email-input').value.trim();
+      if (!email || !email.includes('@')) {
+        alert('Please enter a valid email address.');
+        return;
+      }
+      generatedSettingsEmailCode = String(Math.floor(100000 + Math.random() * 900000));
+      document.getElementById('settings-email-code-hint').textContent =
+        `Verification code prepared for ${email}: ${generatedSettingsEmailCode}`;
+    }
+
+    function verifyAndSaveEmail() {
+      const email = document.getElementById('settings-email-input').value.trim();
+      const enteredCode = document.getElementById('settings-email-code').value.trim();
+      if (!email || !email.includes('@')) {
+        alert('Please enter a valid email address.');
+        return;
+      }
+      if (!generatedSettingsEmailCode || enteredCode !== generatedSettingsEmailCode) {
+        alert('Invalid verification code.');
+        return;
+      }
+      localStorage.setItem('verified_recovery_email', email);
+      generatedSettingsEmailCode = '';
+      refreshEmailDisplay();
+      alert('Email verified and saved successfully.');
+    }
+
+    function openForgotFromSettings() {
+      closeSettingsModal();
+      lockApp();
+      const panel = document.getElementById('forgot-pin-panel');
+      panel.classList.remove('hidden');
+      refreshEmailDisplay();
+    }
+
+    // ==================== DRAWINGS & ACCORDION BEHAVIOR ====================
+    const TYPE_ITEMS = [
+      { id: 'type-saudi', label: 'Saudi / سعودي', svg: '<div class="type-pill-visual">Saudi • سعودي</div>', isTypeCard: true, allowCommentSuta: false },
+      { id: 'type-qatari', label: 'Qatari / قطري', svg: '<div class="type-pill-visual">Qatari • قطري</div>', isTypeCard: true, allowCommentSuta: false },
+      { id: 'type-kuwaiti', label: 'Kuwaiti / كويتي', svg: '<div class="type-pill-visual">Kuwaiti • كويتي</div>', isTypeCard: true, allowCommentSuta: false },
+      { id: 'type-tatreez', label: 'Tatreez / تطريز', svg: '<div class="type-pill-visual">Tatreez • تطريز</div>', isTypeCard: true, allowCommentSuta: false }
+    ];
+
+    const COLLAR_ITEMS = [
+      { id: 'col-1', label: 'Collar 1', svg: '<svg width="64" height="40" viewBox="0 0 68 42"><path d="M12 18 Q34 8 56 18 L56 26 Q34 16 12 26 Z" fill="#fff" stroke="#0f172a" stroke-width="2.2"/><path d="M12 26 Q34 36 56 26" fill="none" stroke="#0f172a" stroke-width="2"/><circle cx="34" cy="22" r="2.2" fill="#0f172a"/></svg>', allowCommentSuta: true },
+      { id: 'col-2', label: 'Collar 2', svg: '<svg width="64" height="40" viewBox="0 0 68 42"><path d="M12 18 Q34 8 56 18 L56 27 Q34 17 12 27 Z" fill="#fff" stroke="#0f172a" stroke-width="2.2"/><path d="M12 27 Q34 37 56 27" fill="none" stroke="#0f172a" stroke-width="2"/><circle cx="34" cy="19.5" r="1.8" fill="#0f172a"/><circle cx="34" cy="24.5" r="1.8" fill="#0f172a"/></svg>', allowCommentSuta: true },
+      { id: 'col-3', label: 'Collar 3', svg: '<svg width="64" height="40" viewBox="0 0 68 42"><path d="M12 16 Q34 8 56 16 L54 27 L37 29 L34 22 L31 29 L14 27 Z" fill="#fff" stroke="#0f172a" stroke-width="2.2" stroke-linejoin="round"/></svg>', allowCommentSuta: true },
+      { id: 'col-4', label: 'Collar 4', svg: '<svg width="64" height="40" viewBox="0 0 68 42"><path d="M12 16 Q34 8 56 16 L54 27 L38 33 L34 22 L30 33 L14 27 Z" fill="#fff" stroke="#0f172a" stroke-width="2.2" stroke-linejoin="round"/></svg>', allowCommentSuta: true },
+      { id: 'col-5', label: 'Collar 5', svg: '<svg width="64" height="40" viewBox="0 0 68 42"><path d="M14 14 H54 L58 26 L39 30 L34 20 L29 30 L10 26 Z" fill="#fff" stroke="#0f172a" stroke-width="2.2" stroke-linejoin="round"/></svg>', allowCommentSuta: true },
+      { id: 'col-6', label: 'Collar 6', svg: '<svg width="64" height="40" viewBox="0 0 68 42"><polygon points="14,14 34,8 54,14 52,28 34,34 16,28" fill="#fff" stroke="#0f172a" stroke-width="2.2"/><line x1="34" y1="8" x2="34" y2="21" stroke="#0f172a" stroke-width="2"/></svg>', allowCommentSuta: true }
+    ];
+
+    const SLEEVE_ITEMS = [
+      { id: 'slv-1', label: 'Sleeve 1', svg: '<svg width="62" height="44" viewBox="0 0 68 48"><line x1="6" y1="10" x2="40" y2="10" stroke="#0f172a" stroke-width="2.4"/><line x1="6" y1="38" x2="40" y2="38" stroke="#0f172a" stroke-width="2.4"/><rect x="40" y="10" width="22" height="28" fill="none" stroke="#0f172a" stroke-width="2.4"/></svg>', allowCommentSuta: true },
+      { id: 'slv-2', label: 'Sleeve 2', svg: '<svg width="62" height="44" viewBox="0 0 68 48"><line x1="6" y1="10" x2="40" y2="10" stroke="#0f172a" stroke-width="2.4"/><line x1="6" y1="38" x2="40" y2="38" stroke="#0f172a" stroke-width="2.4"/><rect x="40" y="10" width="22" height="28" fill="none" stroke="#0f172a" stroke-width="2.4"/><circle cx="51" cy="24" r="2.6" fill="#0f172a"/></svg>', allowCommentSuta: true },
+      { id: 'slv-3', label: 'Sleeve 3', svg: '<svg width="62" height="44" viewBox="0 0 68 48"><line x1="6" y1="10" x2="42" y2="10" stroke="#0f172a" stroke-width="2.4"/><line x1="6" y1="38" x2="42" y2="38" stroke="#0f172a" stroke-width="2.4"/><line x1="22" y1="21" x2="42" y2="21" stroke="#0f172a" stroke-width="2"/><line x1="22" y1="27" x2="42" y2="27" stroke="#0f172a" stroke-width="2"/><path d="M42 10 H62 V32 L54 38 H42 Z" fill="none" stroke="#0f172a" stroke-width="2.4"/><circle cx="48" cy="24" r="2.3" fill="#0f172a"/></svg>', allowCommentSuta: true },
+      { id: 'slv-4', label: 'Sleeve 4', svg: '<svg width="62" height="44" viewBox="0 0 68 48"><line x1="6" y1="10" x2="42" y2="10" stroke="#0f172a" stroke-width="2.4"/><line x1="6" y1="38" x2="42" y2="38" stroke="#0f172a" stroke-width="2.4"/><line x1="22" y1="21" x2="42" y2="21" stroke="#0f172a" stroke-width="2"/><line x1="22" y1="27" x2="42" y2="27" stroke="#0f172a" stroke-width="2"/><rect x="42" y="10" width="20" height="28" fill="none" stroke="#0f172a" stroke-width="2.4"/><circle cx="48" cy="24" r="2.3" fill="#0f172a"/></svg>', allowCommentSuta: true },
+      { id: 'slv-5', label: 'Sleeve 5', svg: '<svg width="62" height="44" viewBox="0 0 68 48"><line x1="6" y1="10" x2="42" y2="10" stroke="#0f172a" stroke-width="2.4"/><line x1="6" y1="38" x2="42" y2="38" stroke="#0f172a" stroke-width="2.4"/><line x1="22" y1="21" x2="42" y2="21" stroke="#0f172a" stroke-width="2"/><line x1="22" y1="27" x2="42" y2="27" stroke="#0f172a" stroke-width="2"/><path d="M42 10 H50 A12 12 0 0 1 62 22 V38 H42 Z" fill="none" stroke="#0f172a" stroke-width="2.4"/><circle cx="48" cy="24" r="2.3" fill="#0f172a"/></svg>', allowCommentSuta: true }
+    ];
+
+    const BUTTON_PLATE_ITEMS = [
+      { id: 'bp-b1', label: 'B 1', svg: '<svg width="36" height="64" viewBox="0 0 40 68"><path d="M13 6 H27 V52 L20 63 L13 52 Z" fill="none" stroke="#0f172a" stroke-width="2.2" stroke-linejoin="round"/><line x1="13" y1="12" x2="27" y2="12" stroke="#0f172a" stroke-width="2"/><circle cx="20" cy="22" r="2" fill="#0f172a"/><circle cx="20" cy="33" r="2" fill="#0f172a"/><circle cx="20" cy="44" r="2" fill="#0f172a"/></svg>', allowCommentSuta: true },
+      { id: 'bp-b2', label: 'B 2', svg: '<svg width="36" height="64" viewBox="0 0 40 68"><rect x="13" y="6" width="14" height="56" fill="none" stroke="#0f172a" stroke-width="2.2"/><line x1="13" y1="12" x2="27" y2="12" stroke="#0f172a" stroke-width="2"/><circle cx="20" cy="22" r="2" fill="#0f172a"/><circle cx="20" cy="35" r="2" fill="#0f172a"/><circle cx="20" cy="48" r="2" fill="#0f172a"/></svg>', allowCommentSuta: true },
+      { id: 'bp-m1', label: 'M 1', svg: '<svg width="36" height="64" viewBox="0 0 40 68"><path d="M13 6 H27 V52 L20 63 L13 52 Z" fill="none" stroke="#0f172a" stroke-width="2.2" stroke-linejoin="round"/><line x1="13" y1="12" x2="27" y2="12" stroke="#0f172a" stroke-width="2"/></svg>', allowCommentSuta: true },
+      { id: 'bp-m2', label: 'M 2', svg: '<svg width="36" height="64" viewBox="0 0 40 68"><rect x="13" y="6" width="14" height="56" fill="none" stroke="#0f172a" stroke-width="2.2"/><line x1="13" y1="12" x2="27" y2="12" stroke="#0f172a" stroke-width="2"/></svg>', allowCommentSuta: true },
+      { id: 'bp-ch1', label: 'CH 1', svg: '<svg width="36" height="64" viewBox="0 0 40 68"><rect x="13" y="6" width="14" height="56" fill="#0f172a" stroke="#0f172a" stroke-width="2"/><rect x="15" y="12" width="10" height="44" fill="none" stroke="#fff" stroke-width="1.5" stroke-dasharray="2,2"/><rect x="15" y="28" width="10" height="8" fill="#fff"/></svg>', allowCommentSuta: true },
+      { id: 'bp-ch2', label: 'CH 2', svg: '<svg width="36" height="64" viewBox="0 0 40 68"><path d="M13 6 H27 V52 L20 63 L13 52 Z" fill="#0f172a" stroke="#0f172a" stroke-width="2" stroke-linejoin="round"/><rect x="15" y="26" width="10" height="8" fill="#fff"/></svg>', allowCommentSuta: true }
+    ];
+
+    const POCKET_ITEMS = [
+      { id: 'pkt-u', label: 'U-Pocket', svg: '<svg width="48" height="44" viewBox="0 0 52 48"><path d="M10 8 H42 V28 A16 16 0 0 1 10 28 Z" fill="none" stroke="#0f172a" stroke-width="2.4"/></svg>', allowCommentSuta: true },
+      { id: 'pkt-sq', label: 'Square Pocket', svg: '<svg width="48" height="44" viewBox="0 0 52 48"><rect x="10" y="10" width="32" height="28" fill="none" stroke="#0f172a" stroke-width="2.4"/><line x1="10" y1="17" x2="42" y2="17" stroke="#0f172a" stroke-width="2"/></svg>', allowCommentSuta: true },
+      { id: 'pkt-flap', label: 'Flap Pocket', svg: '<svg width="48" height="44" viewBox="0 0 52 48"><rect x="10" y="12" width="32" height="26" fill="none" stroke="#0f172a" stroke-width="2.4"/><polyline points="10,12 26,22 42,12" fill="none" stroke="#0f172a" stroke-width="2"/></svg>', allowCommentSuta: true }
+    ];
+
+    const PEN_MOBILE_ITEMS = [
+      { id: 'tool-pen', label: 'Pen', svg: '<svg width="34" height="52" viewBox="0 0 36 56"><polygon points="18,52 14,42 22,42" fill="#0f172a"/><rect x="14" y="14" width="8" height="28" fill="#0f172a"/><rect x="13" y="6" width="10" height="6" rx="1" fill="#0f172a"/><line x1="23" y1="10" x2="23" y2="26" stroke="#0f172a" stroke-width="2"/></svg>', allowCommentSuta: false },
+      { id: 'tool-mobile', label: 'Mobile', svg: '<svg width="44" height="42" viewBox="0 0 48 44"><rect x="10" y="8" width="22" height="28" rx="3" fill="none" stroke="#0f172a" stroke-width="2.4"/><rect x="13" y="12" width="16" height="10" fill="none" stroke="#0f172a" stroke-width="1.8"/><circle cx="15" cy="27" r="1.4" fill="#0f172a"/><circle cx="20" cy="27" r="1.4" fill="#0f172a"/><circle cx="25" cy="27" r="1.4" fill="#0f172a"/><circle cx="15" cy="31" r="1.4" fill="#0f172a"/><circle cx="20" cy="31" r="1.4" fill="#0f172a"/><circle cx="25" cy="31" r="1.4" fill="#0f172a"/><line x1="32" y1="14" x2="38" y2="10" stroke="#0f172a" stroke-width="2.4"/></svg>', allowCommentSuta: false }
+    ];
+
+    let drawingState = {};
+    let altDrawingState = {};
+    let currentlyExpandedAltId = null;
+
+    function countWords(text) {
+      const trimmed = (text || '').trim();
+      return trimmed ? trimmed.split(/\s+/).length : 0;
+    }
+
+    function createEmptyDrawingMap() {
+      const map = {};
+      [...TYPE_ITEMS, ...COLLAR_ITEMS, ...SLEEVE_ITEMS, ...BUTTON_PLATE_ITEMS, ...POCKET_ITEMS, ...PEN_MOBILE_ITEMS].forEach(it => {
+        map[it.id] = { checked: false, commentOpen: false, comment: '' };
+      });
+      return map;
+    }
+
+    function initDrawingState() {
+      drawingState = createEmptyDrawingMap();
+      currentlyExpandedId = null;
+      renderAllDrawingStrips();
+    }
+
+    function initAltDrawingState(sourceMap) {
+      altDrawingState = createEmptyDrawingMap();
+      if (sourceMap) {
+        Object.keys(sourceMap).forEach(k => {
+          if (altDrawingState[k]) {
+            altDrawingState[k] = { ...sourceMap[k], commentOpen: false };
+          }
+        });
+      }
+      currentlyExpandedAltId = null;
+      renderAllAltDrawingStrips();
+    }
+
+    function renderAllDrawingStrips() {
+      renderStrip('type-items-strip', TYPE_ITEMS, { allowComment: true }, drawingState, 'order');
+      renderStrip('collar-items-strip', COLLAR_ITEMS, { allowComment: true }, drawingState, 'order');
+      renderStrip('sleeve-items-strip', SLEEVE_ITEMS, { allowComment: true }, drawingState, 'order');
+      renderStrip('button-plate-strip', BUTTON_PLATE_ITEMS, { allowComment: true }, drawingState, 'order');
+      renderStrip('pocket-items-strip', POCKET_ITEMS, { allowComment: true }, drawingState, 'order');
+      renderStrip('pen-mobile-strip', PEN_MOBILE_ITEMS, { allowComment: false }, drawingState, 'order');
+    }
+
+    function renderAllAltDrawingStrips() {
+      renderStrip('alt-type-items-strip', TYPE_ITEMS, { allowComment: true }, altDrawingState, 'alt');
+      renderStrip('alt-collar-items-strip', COLLAR_ITEMS, { allowComment: true }, altDrawingState, 'alt');
+      renderStrip('alt-sleeve-items-strip', SLEEVE_ITEMS, { allowComment: true }, altDrawingState, 'alt');
+      renderStrip('alt-button-plate-strip', BUTTON_PLATE_ITEMS, { allowComment: true }, altDrawingState, 'alt');
+      renderStrip('alt-pocket-items-strip', POCKET_ITEMS, { allowComment: true }, altDrawingState, 'alt');
+      renderStrip('alt-pen-mobile-strip', PEN_MOBILE_ITEMS, { allowComment: false }, altDrawingState, 'alt');
+    }
+
+    function renderStrip(containerId, items, opts, stateObj, prefix) {
+      const container = document.getElementById(containerId);
+      if (!container) return;
+      container.innerHTML = items.map(item => {
+        const st = stateObj[item.id] || { checked: false, commentOpen: false, comment: '' };
+        const isExpanded = opts.allowComment && st.commentOpen;
+        const wc = countWords(st.comment);
+        return `
+          <div class="art-item ${item.isTypeCard ? 'type-card' : ''} ${st.checked ? 'active-item' : ''} ${isExpanded ? 'expanded-comment' : ''}">
+            <div class="art-top-bar">
+              <input type="checkbox" ${st.checked ? 'checked' : ''} onchange="toggleItemTick('${item.id}', this.checked, ${opts.allowComment}, '${prefix}')" title="Select" />
+              <span>${item.label}</span>
+            </div>
+            <div class="art-svg-wrap" onclick="onArtClick('${item.id}', ${opts.allowComment}, '${prefix}')">
+              ${item.svg}
+            </div>
+            ${opts.allowComment ? `
+              <div class="art-comment-box">
+                ${item.allowCommentSuta ? `
+                  <div class="suta-comment-bar">
+                    <span class="suta-label">১ সুতা (+0.125)</span>
+                    <div style="display:flex; gap:4px;">
+                      <button type="button" class="suta-btn" onclick="applySutaToCommentValue('${item.id}', -1, '${prefix}')" title="Subtract 1 Suta from value (—)">—</button>
+                      <button type="button" class="suta-btn" onclick="applySutaToCommentValue('${item.id}', 1, '${prefix}')" title="Add 1 Suta to value (+)">+</button>
+                    </div>
+                  </div>
+                ` : ''}
+                <textarea rows="3" maxlength="1400" placeholder="Write comment / value (e.g. 33)..." oninput="updateItemComment('${item.id}', this.value, 'wc-${prefix}-${item.id}', '${prefix}')">${st.comment || ''}</textarea>
+                <div class="word-counter" id="wc-${prefix}-${item.id}">Words: ${wc} / 200</div>
+              </div>
+            ` : ''}
+          </div>
+        `;
+      }).join('');
+    }
+
+    function closePreviousAccordion(currentId, prefix) {
+      const isAlt = prefix === 'alt';
+      const activeId = isAlt ? currentlyExpandedAltId : currentlyExpandedId;
+      const stateObj = isAlt ? altDrawingState : drawingState;
+      if (activeId && activeId !== currentId) {
+        const prevSt = stateObj[activeId];
+        if (prevSt) {
+          prevSt.commentOpen = false;
+          if (!prevSt.comment || !prevSt.comment.trim()) {
+            prevSt.checked = false;
+          }
+        }
+      }
+    }
+
+    function toggleItemTick(id, checked, allowComment, prefix = 'order') {
+      const isAlt = prefix === 'alt';
+      const stateObj = isAlt ? altDrawingState : drawingState;
+      const st = stateObj[id];
+      if (!st) return;
+
+      if (checked) {
+        if (allowComment) {
+          closePreviousAccordion(id, prefix);
+          st.checked = true;
+          st.commentOpen = true;
+          if (isAlt) currentlyExpandedAltId = id; else currentlyExpandedId = id;
+        } else {
+          st.checked = true;
+        }
+      } else {
+        st.checked = false;
+        st.commentOpen = false;
+        if (isAlt && currentlyExpandedAltId === id) currentlyExpandedAltId = null;
+        if (!isAlt && currentlyExpandedId === id) currentlyExpandedId = null;
+      }
+      if (isAlt) renderAllAltDrawingStrips(); else renderAllDrawingStrips();
+    }
+
+    function onArtClick(id, allowComment, prefix = 'order') {
+      const isAlt = prefix === 'alt';
+      const stateObj = isAlt ? altDrawingState : drawingState;
+      const st = stateObj[id];
+      if (!st) return;
+
+      if (!allowComment) {
+        st.checked = !st.checked;
+        if (isAlt) renderAllAltDrawingStrips(); else renderAllDrawingStrips();
+        return;
+      }
+
+      if (st.commentOpen) {
+        st.commentOpen = false;
+        if (!st.comment || !st.comment.trim()) {
+          st.checked = false;
+        }
+        if (isAlt && currentlyExpandedAltId === id) currentlyExpandedAltId = null;
+        if (!isAlt && currentlyExpandedId === id) currentlyExpandedId = null;
+      } else {
+        closePreviousAccordion(id, prefix);
+        st.checked = true;
+        st.commentOpen = true;
+        if (isAlt) currentlyExpandedAltId = id; else currentlyExpandedId = id;
+      }
+      if (isAlt) renderAllAltDrawingStrips(); else renderAllDrawingStrips();
+    }
+
+    function updateItemComment(id, val, wcId, prefix = 'order') {
+      const isAlt = prefix === 'alt';
+      const stateObj = isAlt ? altDrawingState : drawingState;
+      const st = stateObj[id];
+      if (!st) return;
+      st.comment = val;
+      const wcEl = document.getElementById(wcId);
+      if (wcEl) {
+        wcEl.textContent = `Words: ${countWords(val)} / 200`;
+      }
+    }
+
+    function summarizeDrawings(drawMap) {
+      if (!drawMap) return '-';
+      const allDefs = [...TYPE_ITEMS, ...COLLAR_ITEMS, ...SLEEVE_ITEMS, ...BUTTON_PLATE_ITEMS, ...POCKET_ITEMS, ...PEN_MOBILE_ITEMS];
+      const chosenSummary = [];
+      allDefs.forEach(d => {
+        const st = drawMap[d.id];
+        if (st && (st.checked || (st.comment && st.comment.trim()))) {
+          const commentPart = st.comment && st.comment.trim() ? ` [${st.comment.trim()}]` : '';
+          chosenSummary.push(`${d.label}${commentPart}`);
+        }
+      });
+      return chosenSummary.length ? chosenSummary.join(' • ') : '-';
+    }
+
+    // ==================== LOCK, PIN CHANGE & EMAIL RECOVERY ====================
+    const storedPin = () => localStorage.getItem('shop_pin') || '1234';
+
+    function unlockApp() {
+      const pinField = document.getElementById('pin-field');
+      const val = pinField.value;
+      if (val === storedPin()) {
+        document.getElementById('lock-screen').classList.add('hidden');
+        pinField.value = '';
+        document.getElementById('lock-error').textContent = '';
+        document.getElementById('forgot-pin-panel').classList.add('hidden');
+      } else {
+        pinField.value = '';
+        pinField.focus();
+        document.getElementById('lock-error').textContent = 'Incorrect PIN. Please try again.';
+      }
+    }
+
+    function lockApp() {
+      document.getElementById('lock-screen').classList.remove('hidden');
+      document.getElementById('pin-field').value = '';
+      document.getElementById('lock-error').textContent = '';
+    }
+
+    function toggleForgotPinPanel() {
+      const panel = document.getElementById('forgot-pin-panel');
+      panel.classList.toggle('hidden');
+      refreshEmailDisplay();
+    }
+
+    function sendRecoveryCode() {
+      const verified = localStorage.getItem('verified_recovery_email') || '';
+      const inputEmail = document.getElementById('recovery-email-input').value.trim();
+      const msgEl = document.getElementById('recovery-msg');
+      const codeDisp = document.getElementById('recovery-code-display');
+
+      codeDisp.textContent = '';
+      if (!verified) {
+        msgEl.style.color = '#dc2626';
+        msgEl.textContent = 'No verified email found. Set one in Settings.';
+        return;
+      }
+      if (inputEmail.toLowerCase() !== verified.toLowerCase()) {
+        msgEl.style.color = '#dc2626';
+        msgEl.textContent = 'Email does not match your verified recovery email.';
+        return;
+      }
+
+      generatedRecoveryCode = String(Math.floor(100000 + Math.random() * 900000));
+      msgEl.style.color = '#0f766e';
+      msgEl.textContent = `Recovery code: ${generatedRecoveryCode}`;
+    }
+
+    function resetPinWithEmail() {
+      const verified = localStorage.getItem('verified_recovery_email') || '';
+      const inputEmail = document.getElementById('recovery-email-input').value.trim();
+      const codeVal = document.getElementById('recovery-code-input').value.trim();
+      const newPin = document.getElementById('recovery-new-pin').value.trim();
+      const msgEl = document.getElementById('recovery-msg');
+
+      if (!verified || inputEmail.toLowerCase() !== verified.toLowerCase()) {
+        msgEl.style.color = '#dc2626';
+        msgEl.textContent = 'Please use your verified email address.';
+        return;
+      }
+      if (!generatedRecoveryCode || codeVal !== generatedRecoveryCode) {
+        msgEl.style.color = '#dc2626';
+        msgEl.textContent = 'Invalid verification code.';
+        return;
+      }
+      if (!/^\d{4,6}$/.test(newPin)) {
+        msgEl.style.color = '#dc2626';
+        msgEl.textContent = 'New PIN must be 4 to 6 digits.';
+        return;
+      }
+
+      localStorage.setItem('shop_pin', newPin);
+      generatedRecoveryCode = '';
+      document.getElementById('recovery-code-input').value = '';
+      document.getElementById('recovery-new-pin').value = '';
+      document.getElementById('recovery-code-display').textContent = '';
+      msgEl.style.color = '#16a34a';
+      msgEl.textContent = 'PIN reset successfully!';
+    }
+
+    function changePinPrompt() {
+      const current = prompt('Enter current PIN:');
+      if (current !== storedPin()) return alert('Current PIN is incorrect.');
+      const next = prompt('Enter new 4-6 digit PIN:');
+      if (next && /^\d{4,6}$/.test(next)) {
+        localStorage.setItem('shop_pin', next);
+        alert('PIN updated successfully.');
+      } else if (next !== null) {
+        alert('PIN must be 4 to 6 digits.');
+      }
+    }
+
+    function togglePrivacyMode() {
+      document.body.classList.toggle('privacy-mode');
+      const isHidden = document.body.classList.contains('privacy-mode');
+      document.getElementById('privacy-btn').textContent = isHidden
+        ? 'Show Finance & Customer'
+        : 'Hide Finance & Customer';
+    }
+
+    // ==================== NAVIGATION ====================
+    function switchTab(tabName) {
+      document.querySelectorAll('.tab-section').forEach(s => s.classList.add('hidden'));
+      const targetTab = document.getElementById(`tab-${tabName}`);
+      targetTab.classList.remove('hidden');
+      targetTab.classList.remove('animate-fade');
+      void targetTab.offsetWidth;
+      targetTab.classList.add('animate-fade');
+
+      document.querySelectorAll('.nav-bar button').forEach(b => {
+        b.classList.toggle('active', b.dataset.tab === tabName);
+      });
+
+      document.body.classList.toggle('home-full-bg', tabName === 'home');
+
+      if (tabName === 'home') updateTodaySummary();
+      if (tabName === 'order') { syncCatalogDropdowns(); refreshSerialDisplay(); }
+      if (tabName === 'search') renderOrderList();
+      if (tabName === 'alteration') renderAlterationTab();
+      if (tabName === 'catalog') renderCatalog();
+      if (tabName === 'statement') renderMonthlyStatement();
+      if (tabName === 'offers') renderOfferList();
+    }
+
+    function openNewOrder() {
+      resetOrderForm();
+      switchTab('order');
+    }
+
+    function addDaysToDateStr(dateStr, days) {
+      const base = dateStr ? new Date(dateStr + 'T00:00:00') : new Date();
+      base.setDate(base.getDate() + Number(days || 0));
+      return base.toISOString().split('T')[0];
+    }
+
+    function recalcDeliveryFromOption() {
+      const sel = document.getElementById('del-days-select').value;
+      const customWrap = document.getElementById('custom-days-wrap');
+      const recVal = document.getElementById('rec-date').value;
+
+      if (sel === 'custom') {
+        customWrap.style.display = 'flex';
+        applyCustomDays();
+      } else {
+        customWrap.style.display = 'none';
+        document.getElementById('del-date').value = addDaysToDateStr(recVal, parseInt(sel, 10));
+      }
+    }
+
+    function applyCustomDays() {
+      const recVal = document.getElementById('rec-date').value;
+      const days = parseInt(document.getElementById('custom-del-days').value, 10) || 0;
+      document.getElementById('del-date').value = addDaysToDateStr(recVal, days);
+    }
+
+    function recalcAltDeliveryFromOption() {
+      const sel = document.getElementById('alt-del-days-select').value;
+      const customWrap = document.getElementById('alt-custom-days-wrap');
+      const recVal = document.getElementById('alt-rec-date').value;
+
+      if (sel === 'custom') {
+        customWrap.style.display = 'flex';
+        applyAltCustomDays();
+      } else {
+        customWrap.style.display = 'none';
+        document.getElementById('alt-del-date').value = addDaysToDateStr(recVal, parseInt(sel, 10));
+      }
+    }
+
+    function applyAltCustomDays() {
+      const recVal = document.getElementById('alt-rec-date').value;
+      const days = parseInt(document.getElementById('alt-custom-del-days').value, 10) || 0;
+      document.getElementById('alt-del-date').value = addDaysToDateStr(recVal, days);
+    }
+
+    function setDefaultDates() {
+      const today = new Date().toISOString().split('T')[0];
+      document.getElementById('rec-date').value = today;
+      document.getElementById('del-days-select').value = '8';
+      document.getElementById('custom-days-wrap').style.display = 'none';
+      document.getElementById('del-date').value = addDaysToDateStr(today, 8);
+
+      document.getElementById('alt-rec-date').value = today;
+      document.getElementById('alt-del-days-select').value = '8';
+      document.getElementById('alt-custom-days-wrap').style.display = 'none';
+      document.getElementById('alt-del-date').value = addDaysToDateStr(today, 8);
+
+      document.getElementById('today-date-display').textContent = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+      document.getElementById('month-picker').value = today.slice(0, 7);
+    }
+
+    function updateDueCalc() {
+      const total = parseFloat(document.getElementById('pay-total').value) || 0;
+      const adv = parseFloat(document.getElementById('pay-advance').value) || 0;
+      document.getElementById('pay-due').value = Math.max(0, total - adv);
+    }
+
+    function updateAltDueCalc() {
+      const total = parseFloat(document.getElementById('alt-pay-total').value) || 0;
+      const adv = parseFloat(document.getElementById('alt-pay-advance').value) || 0;
+      document.getElementById('alt-pay-due').value = Math.max(0, total - adv);
+    }
+
+    function toggleFabricDropdown() {
+      const src = document.getElementById('fab-source').value;
+      const selectWrap = document.getElementById('fab-select-wrap');
+      selectWrap.classList.toggle('hidden', src !== 'Shop Fabric');
+      toggleCustomCatalogInput();
+    }
+
+    function toggleCustomCatalogInput() {
+      const src = document.getElementById('fab-source').value;
+      const selVal = document.getElementById('fab-catalog-select').value;
+      const customWrap = document.getElementById('fab-custom-catalog-wrap');
+      customWrap.style.display = (src === 'Shop Fabric' && selVal === '__CUSTOM__') ? 'flex' : 'none';
+    }
+
+    function toggleAltFabricDropdown() {
+      const src = document.getElementById('alt-fab-source').value;
+      const selectWrap = document.getElementById('alt-fab-select-wrap');
+      selectWrap.classList.toggle('hidden', src !== 'Shop Fabric');
+      toggleAltCustomCatalogInput();
+    }
+
+    function toggleAltCustomCatalogInput() {
+      const src = document.getElementById('alt-fab-source').value;
+      const selVal = document.getElementById('alt-fab-catalog-select').value;
+      const customWrap = document.getElementById('alt-fab-custom-catalog-wrap');
+      customWrap.style.display = (src === 'Shop Fabric' && selVal === '__CUSTOM__') ? 'flex' : 'none';
+    }
+
+    function syncCatalogDropdowns() {
+      const activeItems = catalog.filter(c => c.active);
+      const optionsHtml = activeItems.map(c =>
+        `<option value="${c.origin} - ${c.type} (${c.color})">${c.origin} - ${c.type} (${c.color})</option>`
+      ).join('') + `<option value="__CUSTOM__">Custom</option>`;
+
+      const sel1 = document.getElementById('fab-catalog-select');
+      if (sel1) sel1.innerHTML = optionsHtml;
+      toggleCustomCatalogInput();
+
+      const sel2 = document.getElementById('alt-fab-catalog-select');
+      if (sel2) sel2.innerHTML = optionsHtml;
+      toggleAltCustomCatalogInput();
+    }
+
+    function fileToBase64(file) {
+      return new Promise((resolve) => {
+        if (!file) return resolve('');
+        const reader = new FileReader();
+        reader.onload = (e) => resolve(e.target.result);
+        reader.readAsDataURL(file);
+      });
+    }
+
+    async function handleInvoicePhotoSelect(inputEl) {
+      if (inputEl.files && inputEl.files[0]) {
+        pendingInvoicePhotoBase64 = await fileToBase64(inputEl.files[0]);
+        document.getElementById('photo-preview-box').innerHTML =
+          `<img src="${pendingInvoicePhotoBase64}" style="max-height:110px; border-radius:6px; border:1px solid #cbd5e1;" />`;
+      }
+    }
+
+    async function handleAltPhotoSelect(inputEl) {
+      if (inputEl.files && inputEl.files[0]) {
+        pendingAltPhotoBase64 = await fileToBase64(inputEl.files[0]);
+        document.getElementById('alt-photo-preview-box').innerHTML =
+          `<img src="${pendingAltPhotoBase64}" style="max-height:110px; border-radius:6px; border:1px solid #cbd5e1;" />`;
+      }
+    }
+
+    // ==================== SAVE & DELETE ====================
+    function saveAndPreviewOrder() {
+      const custName = document.getElementById('cust-name').value.trim();
+      const custPhone = document.getElementById('cust-phone').value.trim().replace(/^0+/, '');
+      const totalRaw = document.getElementById('pay-total').value;
+      const advRaw = document.getElementById('pay-advance').value;
+
+      if (!custName) {
+        alert('Please enter Customer Name (الاسم).');
+        document.getElementById('cust-name').focus();
+        return;
+      }
+      if (!custPhone) {
+        alert('Please enter Mobile Number (جوال العميل).');
+        document.getElementById('cust-phone').focus();
+        return;
+      }
+      if (totalRaw === '' || advRaw === '') {
+        alert('Please enter Total Price and Advance amount.');
+        return;
+      }
+
+      const editId = document.getElementById('edit-order-id').value;
+      const existing = orders.find(o => o.id === editId);
+      const invoicePhoto = pendingInvoicePhotoBase64 || (existing ? existing.invoicePhoto : '');
+
+      const total = parseFloat(totalRaw) || 0;
+      const advance = parseFloat(advRaw) || 0;
+      const due = Math.max(0, total - advance);
+
+      const fabSource = document.getElementById('fab-source').value;
+      let fabSelected = 'Customer Own Fabric';
+      if (fabSource === 'Shop Fabric') {
+        const chosenCat = document.getElementById('fab-catalog-select').value;
+        fabSelected = chosenCat === '__CUSTOM__'
+          ? (document.getElementById('fab-custom-catalog-input').value.trim() || 'Custom Fabric')
+          : chosenCat;
+      }
+      const fabNote = document.getElementById('fab-custom-note').value;
+
+      let assignedSerialId = existing ? existing.serialId : '';
+      if (!existing) {
+        serialCounter += 1;
+        assignedSerialId = 'ID-' + String(serialCounter).padStart(4, '0');
+      }
+
+      const rawMethod = document.getElementById('pay-method').value;
+      const paymentMethod = rawMethod === 'Seva Pay' ? 'Seva Card' : rawMethod;
+
+      const orderObj = {
+        id: editId || 'ORD-' + Date.now(),
+        serialId: assignedSerialId,
+        invoiceNo: document.getElementById('inv-no').value.trim() || '0000',
+        customerName: custName,
+        phone: custPhone,
+        qty: parseInt(document.getElementById('thobe-qty').value, 10) || 1,
+        receivedDate: document.getElementById('rec-date').value || new Date().toISOString().split('T')[0],
+        deliveryDaysOption: document.getElementById('del-days-select').value,
+        deliveryDate: document.getElementById('del-date').value || new Date().toISOString().split('T')[0],
+        measurements: {
+          length: document.getElementById('m-length').value || '-',
+          shoulder: document.getElementById('m-shoulder').value || '-',
+          fullsleeve: document.getElementById('m-sleeve').value || '-',
+          chest: document.getElementById('m-chest').value || '-',
+          widen: document.getElementById('m-widen').value || '-',
+          neck: document.getElementById('m-neck').value || '-',
+          hem: document.getElementById('m-hem').value || '-'
+        },
+        sutaSteps: {
+          length: sutaStepsState['m-length'] || 0,
+          shoulder: sutaStepsState['m-shoulder'] || 0,
+          fullsleeve: sutaStepsState['m-sleeve'] || 0,
+          chest: sutaStepsState['m-chest'] || 0,
+          widen: sutaStepsState['m-widen'] || 0,
+          neck: sutaStepsState['m-neck'] || 0,
+          hem: sutaStepsState['m-hem'] || 0,
+          sleeveTop: sutaStepsState['sl-top'] || 0,
+          sleeveMid: sutaStepsState['sl-mid'] || 0,
+          sleeveBot: sutaStepsState['sl-bot'] || 0,
+          sadarKamel: sutaStepsState['bd-chest'] || 0,
+          hip: sutaStepsState['bd-hip'] || 0
+        },
+        extraMeasurements: {
+          sleeveTop: document.getElementById('sl-top').value || '-',
+          sleeveMid: document.getElementById('sl-mid').value || '-',
+          sleeveBot: document.getElementById('sl-bot').value || '-',
+          sadarKamel: document.getElementById('bd-chest').value || '-',
+          hip: document.getElementById('bd-hip').value || '-'
+        },
+        drawingSelections: JSON.parse(JSON.stringify(drawingState)),
+        fabric: `${fabSelected}${fabNote ? ' | ' + fabNote : ''}`,
+        total,
+        advance,
+        due,
+        isPaid: due === 0,
+        paymentMethod,
+        delivered: existing ? existing.delivered : false,
+        deliveredDate: existing ? existing.deliveredDate : '',
+        remarks: document.getElementById('order-remarks').value,
+        invoicePhoto
+      };
+
+      if (editId) {
+        const idx = orders.findIndex(o => o.id === editId);
+        orders[idx] = orderObj;
+      } else {
+        orders.unshift(orderObj);
+      }
+
+      saveLocal();
+      updateTodaySummary();
+      previewInvoice(orderObj.id);
+      resetOrderForm();
+
+      if (typeof confetti === 'function') {
+        confetti({
+          particleCount: 100,
+          spread: 70,
+          origin: { y: 0.6 }
+        });
+      }
+    }
+
+    function deleteOrderWithAnim(buttonEl, id) {
+      const cardEl = buttonEl ? buttonEl.closest('.record-card') : null;
+      if (cardEl) {
+        cardEl.classList.add('animate-delete-card');
+      }
+
+      setTimeout(() => {
+        const idx = orders.findIndex(item => item.id === id);
+        if (idx === -1) return;
+        const o = orders[idx];
+
+        lastDeletedOrder = { order: o, index: idx };
+        lastDeletedAlterations = alterations.filter(a => a.orderId === id);
+
+        orders.splice(idx, 1);
+        alterations = alterations.filter(a => a.orderId !== id);
+        saveLocal();
+        renderOrderList();
+        renderMonthlyStatement();
+        updateTodaySummary();
+
+        if (undoTimer) clearTimeout(undoTimer);
+        document.getElementById('undo-toast-text').textContent =
+          `Deleted ${o.serialId || ''} (#${o.invoiceNo} - ${o.customerName})`;
+        document.getElementById('undo-toast').classList.remove('hidden');
+
+        undoTimer = setTimeout(() => {
+          lastDeletedOrder = null;
+          lastDeletedAlterations = [];
+          document.getElementById('undo-toast').classList.add('hidden');
+        }, 5000);
+      }, 360);
+    }
+
+    function undoLastDelete() {
+      if (!lastDeletedOrder) return;
+      if (undoTimer) clearTimeout(undoTimer);
+
+      const { order, index } = lastDeletedOrder;
+      const insertPos = Math.min(index, orders.length);
+      orders.splice(insertPos, 0, order);
+      if (lastDeletedAlterations.length) {
+        alterations = [...lastDeletedAlterations, ...alterations];
+      }
+
+      lastDeletedOrder = null;
+      lastDeletedAlterations = [];
+      document.getElementById('undo-toast').classList.add('hidden');
+
+      saveLocal();
+      renderOrderList();
+      renderMonthlyStatement();
+      updateTodaySummary();
+    }
+
+    function resetOrderForm() {
+      document.getElementById('order-form').reset();
+      document.getElementById('edit-order-id').value = '';
+      pendingInvoicePhotoBase64 = '';
+      document.getElementById('order-form-heading').textContent = 'Place New Thobe Order';
+      document.getElementById('photo-preview-box').innerHTML = '';
+      setDefaultDates();
+      syncCatalogDropdowns();
+      resetAllSutaSteps();
+      initDrawingState();
+      refreshSerialDisplay();
+    }
+
+    function editOrder(id) {
+      const o = orders.find(item => item.id === id);
+      if (!o) return;
+      switchTab('order');
+      document.getElementById('order-form-heading').textContent = `Edit Order (${o.serialId} / #${o.invoiceNo})`;
+      document.getElementById('edit-order-id').value = o.id;
+      pendingInvoicePhotoBase64 = o.invoicePhoto || '';
+      refreshSerialDisplay();
+      document.getElementById('inv-no').value = o.invoiceNo;
+      document.getElementById('cust-name').value = o.customerName;
+      document.getElementById('cust-phone').value = o.phone;
+      document.getElementById('thobe-qty').value = o.qty;
+      document.getElementById('rec-date').value = o.receivedDate;
+      if (o.deliveryDaysOption) {
+        document.getElementById('del-days-select').value = o.deliveryDaysOption;
+      }
+      document.getElementById('del-date').value = o.deliveryDate;
+
+      document.getElementById('m-length').value = o.measurements.length !== '-' ? o.measurements.length : '';
+      document.getElementById('m-shoulder').value = o.measurements.shoulder !== '-' ? o.measurements.shoulder : '';
+      document.getElementById('m-sleeve').value = o.measurements.fullsleeve !== '-' ? o.measurements.fullsleeve : '';
+      document.getElementById('m-chest').value = o.measurements.chest !== '-' ? o.measurements.chest : '';
+      document.getElementById('m-widen').value = o.measurements.widen !== '-' ? o.measurements.widen : '';
+      document.getElementById('m-neck').value = o.measurements.neck !== '-' ? o.measurements.neck : '';
+      document.getElementById('m-hem').value = (o.measurements.hem || o.measurements.cuff || '') !== '-' ? (o.measurements.hem || o.measurements.cuff) : '';
+
+      const ss = o.sutaSteps || {};
+      sutaStepsState['m-length'] = ss.length || 0;
+      sutaStepsState['m-shoulder'] = ss.shoulder || 0;
+      sutaStepsState['m-sleeve'] = ss.fullsleeve || 0;
+      sutaStepsState['m-chest'] = ss.chest || 0;
+      sutaStepsState['m-widen'] = ss.widen || 0;
+      sutaStepsState['m-neck'] = ss.neck || 0;
+      sutaStepsState['m-hem'] = ss.hem || 0;
+      sutaStepsState['sl-top'] = ss.sleeveTop || 0;
+      sutaStepsState['sl-mid'] = ss.sleeveMid || 0;
+      sutaStepsState['sl-bot'] = ss.sleeveBot || 0;
+      sutaStepsState['bd-chest'] = ss.sadarKamel || 0;
+      sutaStepsState['bd-hip'] = ss.hip || 0;
+      ['m-length', 'm-shoulder', 'm-sleeve', 'm-chest', 'm-widen', 'm-neck', 'm-hem', 'sl-top', 'sl-mid', 'sl-bot', 'bd-chest', 'bd-hip'].forEach(renderMeasurementStepper);
+
+      if (o.extraMeasurements) {
+        document.getElementById('sl-top').value = o.extraMeasurements.sleeveTop !== '-' ? o.extraMeasurements.sleeveTop : '';
+        document.getElementById('sl-mid').value = o.extraMeasurements.sleeveMid !== '-' ? o.extraMeasurements.sleeveMid : '';
+        document.getElementById('sl-bot').value = o.extraMeasurements.sleeveBot !== '-' ? o.extraMeasurements.sleeveBot : '';
+        const sadarVal = o.extraMeasurements.sadarKamel || o.extraMeasurements.sadar || o.extraMeasurements.bodyChest || '';
+        const hipVal = o.extraMeasurements.hip || o.extraMeasurements.bodySleeveLevel || '';
+        document.getElementById('bd-chest').value = sadarVal !== '-' ? sadarVal : '';
+        document.getElementById('bd-hip').value = hipVal !== '-' ? hipVal : '';
+      }
+
+      initDrawingState();
+      if (o.drawingSelections) {
+        Object.keys(o.drawingSelections).forEach(k => {
+          if (drawingState[k]) {
+            drawingState[k] = { ...o.drawingSelections[k], commentOpen: false };
+          }
+        });
+        renderAllDrawingStrips();
+      }
+
+      document.getElementById('pay-total').value = o.total;
+      document.getElementById('pay-advance').value = o.advance;
+      document.getElementById('pay-due').value = o.due;
+      document.getElementById('pay-method').value = o.paymentMethod === 'Seva Pay' ? 'Seva Card' : o.paymentMethod;
+      document.getElementById('order-remarks').value = o.remarks || '';
+      if (o.invoicePhoto) {
+        document.getElementById('photo-preview-box').innerHTML = `<img src="${o.invoicePhoto}" style="max-height:110px; border-radius:6px; border:1px solid #cbd5e1;" />`;
+      }
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // ==================== SEARCH & CUSTOMER ACTIONS ====================
+    function renderOrderList() {
+      const q = document.getElementById('search-box').value.toLowerCase().trim();
+      const container = document.getElementById('orders-container');
+      document.getElementById('total-orders-badge').textContent = `${orders.length} Orders`;
+
+      const filtered = orders.filter(o =>
+        o.customerName.toLowerCase().includes(q) ||
+        o.phone.includes(q) ||
+        o.invoiceNo.toLowerCase().includes(q) ||
+        (o.serialId && o.serialId.toLowerCase().includes(q)) ||
+        (o.id && o.id.toLowerCase().includes(q))
+      );
+
+      if (!filtered.length) {
+        container.innerHTML = '<p style="color:#64748b;">No matching orders found.</p>';
+        return;
+      }
+
+      container.innerHTML = filtered.map(o => {
+        const methodLabel = o.paymentMethod === 'Seva Pay' ? 'Seva Card' : o.paymentMethod;
+        const ss = o.sutaSteps || {};
+        return `
+          <div class="record-card animate-fade">
+            <div>
+              <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                <strong style="font-size:1.05rem; color:var(--primary);">${o.serialId || ''} | Inv #${o.invoiceNo}</strong>
+                <span class="sensitive-customer"><strong>${o.customerName}</strong> (+966${o.phone})</span>
+                <span class="badge sensitive-finance ${o.isPaid ? 'badge-paid' : 'badge-due'}">${o.isPaid ? 'PAID (' + methodLabel + ')' : 'DUE: ' + o.due + ' SAR'}</span>
+                ${o.delivered ? '<span class="badge badge-approved">DELIVERED</span>' : '<span class="badge badge-pending">IN PROGRESS</span>'}
+              </div>
+              <div class="pill-row">
+                <span class="pill">L: ${formatValWithSutaSteps(o.measurements.length, ss.length)}</span>
+                <span class="pill">Sh: ${formatValWithSutaSteps(o.measurements.shoulder, ss.shoulder)}</span>
+                <span class="pill">Sl: ${formatValWithSutaSteps(o.measurements.fullsleeve, ss.fullsleeve)}</span>
+                <span class="pill">Ch: ${formatValWithSutaSteps(o.measurements.chest, ss.chest)}</span>
+                <span class="pill">W: ${formatValWithSutaSteps(o.measurements.widen, ss.widen)}</span>
+                <span class="pill">N: ${formatValWithSutaSteps(o.measurements.neck, ss.neck)}</span>
+                <span class="pill">Hem: ${formatValWithSutaSteps(o.measurements.hem || o.measurements.cuff || '-', ss.hem)}</span>
+              </div>
+              <div style="font-size:0.84rem; color:#475569;">
+                Qty: ${o.qty} | Fabric: ${o.fabric} | Delivery: ${o.deliveryDate} | Total: <span class="sensitive-finance">${o.total} SAR</span>
+              </div>
+            </div>
+            <div style="display:flex; gap:6px; flex-wrap:wrap;">
+              <button type="button" class="btn-secondary btn-sm" onclick="triggerAnim(this, 'animate-click', () => previewInvoice('${o.id}'))">Invoice</button>
+              <button type="button" class="btn-secondary btn-sm" onclick="triggerAnim(this, 'animate-click', () => editOrder('${o.id}'))">Edit</button>
+              <button type="button" class="btn-danger btn-sm" onclick="deleteOrderWithAnim(this, '${o.id}')">Delete</button>
+              ${!o.isPaid ? `<button type="button" class="btn-primary btn-sm sensitive-finance" onclick="triggerAnim(this, 'animate-save', () => markAsPaid('${o.id}'))">Mark Paid</button>` : ''}
+              <button type="button" class="${o.delivered ? 'btn-secondary' : 'btn-warning'} btn-sm" onclick="triggerAnim(this, 'animate-save', () => toggleDelivered('${o.id}'))">${o.delivered ? 'Undo Delivered' : 'Deliver'}</button>
+              <button type="button" class="btn-whatsapp btn-sm" onclick="triggerAnim(this, 'animate-wa', () => sendCustomerWhatsApp('${o.id}'))">WhatsApp</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function markAsPaid(id) {
+      const o = orders.find(item => item.id === id);
+      if (!o) return;
+      const method = confirm('Was payment received via Seva Card?\nOK = Seva Card | Cancel = Cash') ? 'Seva Card' : 'Cash';
+      o.advance = o.total;
+      o.due = 0;
+      o.isPaid = true;
+      o.paymentMethod = method;
+      saveLocal();
+      renderOrderList();
+      renderMonthlyStatement();
+      updateTodaySummary();
+    }
+
+    function toggleDelivered(id) {
+      const o = orders.find(item => item.id === id);
+      if (!o) return;
+      o.delivered = !o.delivered;
+      o.deliveredDate = o.delivered ? new Date().toISOString().split('T')[0] : '';
+      saveLocal();
+      renderOrderList();
+      updateTodaySummary();
+    }
+
+    function buildCustomerWhatsAppMessage(o) {
+      return `Assalamu Alaikum ${o.customerName},\nYour thobe order (${o.serialId} / #${o.invoiceNo}) has been confirmed.\n• Thobes: ${o.qty}\n• Fabric & Color: ${o.fabric}\n• Delivery Date: ${o.deliveryDate}\n• Total: ${o.total} SAR | Paid: ${o.advance} SAR | Balance Due: ${o.due} SAR\n\nAl-Ada'a Al-Shamikh For Men's Tailoring`;
+    }
+
+    function sendCustomerWhatsApp(id) {
+      const o = orders.find(item => item.id === id);
+      if (!o) return;
+      window.open(`https://wa.me/966${o.phone}?text=${encodeURIComponent(buildCustomerWhatsAppMessage(o))}`, '_blank');
+    }
+
+    function downloadSingleOrderRecord(id) {
+      const o = orders.find(item => item.id === id);
+      if (!o) return;
+      const blob = new Blob([JSON.stringify(o, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${o.serialId || 'order'}-${o.invoiceNo || o.id}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    // ==================== CSV EXPORT ====================
+    function exportOrdersCSV(rangeType) {
+      const now = new Date();
+      const todayStr = now.toISOString().split('T')[0];
+      const monthStr = todayStr.slice(0, 7);
+      const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+
+      let list = orders;
+      if (rangeType === 'daily') {
+        list = orders.filter(o => o.receivedDate === todayStr);
+      } else if (rangeType === 'weekly') {
+        list = orders.filter(o => o.receivedDate >= weekAgo);
+      } else if (rangeType === 'monthly') {
+        const pickedMonth = document.getElementById('month-picker').value || monthStr;
+        list = orders.filter(o => o.receivedDate && o.receivedDate.startsWith(pickedMonth));
+      }
+
+      const headers = ['System ID', 'Invoice No', 'Customer Name', 'Phone', 'Received Date', 'Delivery Date', 'Qty', 'Fabric', 'Total SAR', 'Advance SAR', 'Due SAR', 'Payment Method', 'Delivered'];
+      const rows = list.map(o => {
+        const methodLabel = o.paymentMethod === 'Seva Pay' ? 'Seva Card' : (o.paymentMethod || '');
+        return [
+          o.serialId || '',
+          o.invoiceNo || '',
+          `"${(o.customerName || '').replace(/"/g, '""')}"`,
+          `"+966${o.phone || ''}"`,
+          o.receivedDate || '',
+          o.deliveryDate || '',
+          o.qty || 1,
+          `"${(o.fabric || '').replace(/"/g, '""')}"`,
+          o.total || 0,
+          o.advance || 0,
+          o.due || 0,
+          methodLabel,
+          o.delivered ? 'Yes' : 'No'
+        ].join(',');
+      });
+
+      const csvContent = '\uFEFF' + [headers.join(','), ...rows].join('\n');
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `al-adaa-orders-${rangeType}-${todayStr}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    // ==================== INVOICE PREVIEW & CLOSE TO HOME ====================
+    function closeInvoiceAndGoHome() {
+      document.getElementById('invoice-modal').classList.add('hidden');
+      switchTab('home');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function previewInvoice(id) {
+      const o = orders.find(item => item.id === id);
+      if (!o) return;
+      activeInvoiceOrderId = o.id;
+
+      const ss = o.sutaSteps || {};
+
+      document.getElementById('p-inv-no').textContent = '#' + o.invoiceNo;
+      document.getElementById('p2-inv-no').textContent = '#' + o.invoiceNo;
+      document.getElementById('p-serial-id').textContent = o.serialId || '';
+      document.getElementById('p2-serial-id').textContent = o.serialId || '';
+      document.getElementById('p-name').textContent = o.customerName;
+      document.getElementById('p2-name').textContent = o.customerName;
+      document.getElementById('p-phone').textContent = '+966' + o.phone;
+      document.getElementById('p2-phone').textContent = '+966' + o.phone;
+      document.getElementById('p-qty').textContent = o.qty;
+      document.getElementById('p-rec').textContent = o.receivedDate;
+      document.getElementById('p-del').textContent = o.deliveryDate;
+      document.getElementById('p2-del').textContent = o.deliveryDate;
+      document.getElementById('p-fabric').textContent = o.fabric;
+      document.getElementById('p2-fabric').textContent = o.fabric;
+
+      document.getElementById('p-m-length').textContent = formatValWithSutaSteps(o.measurements.length, ss.length);
+      document.getElementById('p-m-shoulder').textContent = formatValWithSutaSteps(o.measurements.shoulder, ss.shoulder);
+      document.getElementById('p-m-sleeve').textContent = formatValWithSutaSteps(o.measurements.fullsleeve, ss.fullsleeve);
+      document.getElementById('p-m-chest').textContent = formatValWithSutaSteps(o.measurements.chest, ss.chest);
+      document.getElementById('p-m-widen').textContent = formatValWithSutaSteps(o.measurements.widen, ss.widen);
+      document.getElementById('p-m-neck').textContent = formatValWithSutaSteps(o.measurements.neck, ss.neck);
+      document.getElementById('p-m-hem').textContent = formatValWithSutaSteps(o.measurements.hem || o.measurements.cuff || '-', ss.hem);
+
+      const ex = o.extraMeasurements || {};
+      document.getElementById('p-sleeve-extra').textContent =
+        `Top: ${formatValWithSutaSteps(ex.sleeveTop, ss.sleeveTop)} | Mid: ${formatValWithSutaSteps(ex.sleeveMid, ss.sleeveMid)} | Bot: ${formatValWithSutaSteps(ex.sleeveBot, ss.sleeveBot)}`;
+      const sadarVal = ex.sadarKamel || ex.sadar || ex.bodyChest || '-';
+      const hipVal = ex.hip || ex.bodySleeveLevel || '-';
+      document.getElementById('p-body-extra').textContent =
+        `Sadar Kamel: ${formatValWithSutaSteps(sadarVal, ss.sadarKamel)} | Hip: ${formatValWithSutaSteps(hipVal, ss.hip)}`;
+
+      document.getElementById('p-drawings-summary').textContent = summarizeDrawings(o.drawingSelections);
+
+      document.getElementById('p-remarks').textContent = o.remarks || '-';
+      document.getElementById('p-total').textContent = o.total;
+      document.getElementById('p2-total').textContent = o.total;
+      document.getElementById('p-adv').textContent = o.advance;
+      document.getElementById('p2-adv').textContent = o.advance;
+      document.getElementById('p-due').textContent = o.due;
+      document.getElementById('p2-due').textContent = o.due;
+      document.getElementById('p-method').textContent = o.paymentMethod === 'Seva Pay' ? 'Seva Card' : o.paymentMethod;
+
+      const waBtn = document.getElementById('inv-wa-share-btn');
+      waBtn.onclick = () => triggerAnim(waBtn, 'animate-wa', () => sendCustomerWhatsApp(o.id));
+      const dlBtn = document.getElementById('inv-download-btn');
+      dlBtn.onclick = () => triggerAnim(dlBtn, 'animate-click', () => downloadSingleOrderRecord(o.id));
+
+      const photoBox = document.getElementById('p-photo-container');
+      photoBox.innerHTML = o.invoicePhoto
+        ? `<p style="font-size:0.8rem; margin-bottom:4px;">Attached Physical Invoice:</p><img src="${o.invoicePhoto}" style="max-height:180px; border:1px solid #000;" />`
+        : '';
+
+      const modal = document.getElementById('invoice-modal');
+      modal.classList.remove('hidden');
+      modal.classList.remove('animate-fade');
+      void modal.offsetWidth;
+      modal.classList.add('animate-fade');
+      modal.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    // ==================== ALTERATION TRACK ====================
+    function switchAltSection(section) {
+      activeAltSection = section;
+      const reqPanel = document.getElementById('alt-section-requests');
+      const createPanel = document.getElementById('alt-section-create');
+      const reqBtn = document.getElementById('alt-tab-requests');
+      const createBtn = document.getElementById('alt-tab-create');
+
+      if (section === 'create') {
+        createPanel.classList.remove('hidden');
+        reqPanel.classList.add('hidden');
+        createBtn.className = 'btn-primary';
+        reqBtn.className = 'btn-secondary';
+        syncCatalogDropdowns();
+        populateAlterationDropdown();
+        renderAllAltDrawingStrips();
+      } else {
+        reqPanel.classList.remove('hidden');
+        createPanel.classList.add('hidden');
+        reqBtn.className = 'btn-primary';
+        createBtn.className = 'btn-secondary';
+        renderAlterationList();
+      }
+    }
+
+    function setAltFilter(mode) {
+      altFilterMode = mode;
+      document.getElementById('alt-filter-pending').className = mode === 'pending' ? 'btn-primary btn-sm' : 'btn-secondary btn-sm';
+      document.getElementById('alt-filter-approved').className = mode === 'approved' ? 'btn-primary btn-sm' : 'btn-secondary btn-sm';
+      document.getElementById('alt-filter-all').className = mode === 'all' ? 'btn-primary btn-sm' : 'btn-secondary btn-sm';
+      renderAlterationList();
+    }
+
+    function toggleAltPreview(altId) {
+      expandedAltId = (expandedAltId === altId) ? null : altId;
+      renderAlterationList();
+    }
+
+    function populateAlterationDropdown() {
+      const sel = document.getElementById('alt-customer-select');
+      const q = (document.getElementById('alt-order-search')?.value || '').toLowerCase().trim();
+
+      const matched = orders.filter(o =>
+        !q ||
+        (o.serialId && o.serialId.toLowerCase().includes(q)) ||
+        (o.invoiceNo && o.invoiceNo.toLowerCase().includes(q)) ||
+        (o.customerName && o.customerName.toLowerCase().includes(q)) ||
+        (o.phone && o.phone.includes(q))
+      );
+
+      sel.innerHTML = matched.length
+        ? matched.map(o => `<option value="${o.id}">${o.serialId || ''} | Inv #${o.invoiceNo} | ${o.customerName} (+966${o.phone})</option>`).join('')
+        : '<option value="">No matching order found</option>';
+
+      if (matched.length && !document.getElementById('edit-alt-id').value) {
+        loadSelectedOrderIntoAltForm();
+      }
+    }
+
+    function loadSelectedOrderIntoAltForm() {
+      const orderId = document.getElementById('alt-customer-select').value;
+      const o = orders.find(item => item.id === orderId);
+      if (!o) return;
+
+      document.getElementById('alt-serial-id-display').textContent = o.serialId || getNextSerialId();
+      document.getElementById('alt-inv-no').value = o.invoiceNo || '';
+      document.getElementById('alt-cust-name').value = o.customerName || '';
+      document.getElementById('alt-cust-phone').value = o.phone || '';
+      document.getElementById('alt-rec-date').value = o.receivedDate || new Date().toISOString().split('T')[0];
+      if (o.deliveryDaysOption) {
+        document.getElementById('alt-del-days-select').value = o.deliveryDaysOption;
+      }
+      document.getElementById('alt-del-date').value = o.deliveryDate || '';
+
+      document.getElementById('alt-length').value = o.measurements.length !== '-' ? o.measurements.length : '';
+      document.getElementById('alt-shoulder').value = o.measurements.shoulder !== '-' ? o.measurements.shoulder : '';
+      document.getElementById('alt-sleeve').value = o.measurements.fullsleeve !== '-' ? o.measurements.fullsleeve : '';
+      document.getElementById('alt-chest').value = o.measurements.chest !== '-' ? o.measurements.chest : '';
+      document.getElementById('alt-widen').value = o.measurements.widen !== '-' ? o.measurements.widen : '';
+      document.getElementById('alt-neck').value = o.measurements.neck !== '-' ? o.measurements.neck : '';
+      const hemVal = o.measurements.hem || o.measurements.cuff || '';
+      document.getElementById('alt-hem').value = hemVal !== '-' ? hemVal : '';
+
+      const ss = o.sutaSteps || {};
+      sutaStepsState['alt-length'] = ss.length || 0;
+      sutaStepsState['alt-shoulder'] = ss.shoulder || 0;
+      sutaStepsState['alt-sleeve'] = ss.fullsleeve || 0;
+      sutaStepsState['alt-chest'] = ss.chest || 0;
+      sutaStepsState['alt-widen'] = ss.widen || 0;
+      sutaStepsState['alt-neck'] = ss.neck || 0;
+      sutaStepsState['alt-hem'] = ss.hem || 0;
+      sutaStepsState['alt-sl-top'] = ss.sleeveTop || 0;
+      sutaStepsState['alt-sl-mid'] = ss.sleeveMid || 0;
+      sutaStepsState['alt-sl-bot'] = ss.sleeveBot || 0;
+      sutaStepsState['alt-bd-chest'] = ss.sadarKamel || 0;
+      sutaStepsState['alt-bd-hip'] = ss.hip || 0;
+      ['alt-length', 'alt-shoulder', 'alt-sleeve', 'alt-chest', 'alt-widen', 'alt-neck', 'alt-hem', 'alt-sl-top', 'alt-sl-mid', 'alt-sl-bot', 'alt-bd-chest', 'alt-bd-hip'].forEach(renderMeasurementStepper);
+
+      const ex = o.extraMeasurements || {};
+      document.getElementById('alt-sl-top').value = ex.sleeveTop && ex.sleeveTop !== '-' ? ex.sleeveTop : '';
+      document.getElementById('alt-sl-mid').value = ex.sleeveMid && ex.sleeveMid !== '-' ? ex.sleeveMid : '';
+      document.getElementById('alt-sl-bot').value = ex.sleeveBot && ex.sleeveBot !== '-' ? ex.sleeveBot : '';
+      const sadarVal = ex.sadarKamel || ex.sadar || ex.bodyChest || '';
+      const hipVal = ex.hip || ex.bodySleeveLevel || '';
+      document.getElementById('alt-bd-chest').value = sadarVal && sadarVal !== '-' ? sadarVal : '';
+      document.getElementById('alt-bd-hip').value = hipVal && hipVal !== '-' ? hipVal : '';
+
+      initAltDrawingState(o.drawingSelections);
+
+      document.getElementById('alt-fab-custom-note').value = o.fabric || '';
+      document.getElementById('alt-thobe-qty').value = o.qty || 1;
+      document.getElementById('alt-pay-total').value = o.total ?? '';
+      document.getElementById('alt-pay-advance').value = o.advance ?? '';
+      document.getElementById('alt-pay-due').value = o.due ?? 0;
+      document.getElementById('alt-pay-method').value = o.paymentMethod === 'Seva Pay' ? 'Seva Card' : (o.paymentMethod || 'Cash');
+      document.getElementById('alt-order-remarks').value = o.remarks || '';
+      pendingAltPhotoBase64 = o.invoicePhoto || '';
+      document.getElementById('alt-photo-preview-box').innerHTML = o.invoicePhoto
+        ? `<img src="${o.invoicePhoto}" style="max-height:110px; border-radius:6px; border:1px solid #cbd5e1;" />`
+        : '';
+    }
+
+    function resetAlterationForm() {
+      document.getElementById('alteration-form').reset();
+      document.getElementById('edit-alt-id').value = '';
+      pendingAltPhotoBase64 = '';
+      document.getElementById('alt-form-heading').textContent = 'New Alteration Request (Full Order & Measurement Menu)';
+      document.getElementById('alt-photo-preview-box').innerHTML = '';
+      setDefaultDates();
+      syncCatalogDropdowns();
+      resetAllSutaSteps();
+      initAltDrawingState(null);
+      populateAlterationDropdown();
+    }
+
+    function renderAlterationTab() {
+      const pendingCount = alterations.filter(a => !a.approved).length;
+      document.getElementById('pending-alt-badge-num').textContent = `${pendingCount}`;
+      populateAlterationDropdown();
+      switchAltSection(activeAltSection);
+    }
+
+    function renderAlterationList() {
+      const pendingCount = alterations.filter(a => !a.approved).length;
+      document.getElementById('pending-alt-count').textContent = `${pendingCount}`;
+      document.getElementById('pending-alt-badge-num').textContent = `${pendingCount}`;
+
+      const filteredAlts = alterations.filter(a => {
+        if (altFilterMode === 'pending') return !a.approved;
+        if (altFilterMode === 'approved') return !!a.approved;
+        return true;
+      });
+
+      const list = document.getElementById('alteration-list');
+      if (!filteredAlts.length) {
+        list.innerHTML = '<p style="color:#64748b; font-size:0.9rem;">No alteration requests in this view.</p>';
+        return;
+      }
+
+      list.innerHTML = filteredAlts.map(a => {
+        const isOpen = expandedAltId === a.id;
+        const parentOrder = orders.find(o => o.id === a.orderId);
+        const phoneClean = (a.phone || '').replace(/^\+966/, '') || (parentOrder ? parentOrder.phone : '');
+        const phoneStr = phoneClean ? `+966${phoneClean}` : '';
+        const m = a.newMeasurements || {};
+        const ss = a.sutaSteps || {};
+        const ex = a.extraMeasurements || {};
+        const fabricDisplay = a.fabric || (parentOrder ? parentOrder.fabric : '-');
+        const qtyDisplay = a.qty || (parentOrder ? parentOrder.qty : 1);
+        const totalDisplay = a.total !== undefined ? a.total : (parentOrder ? parentOrder.total : 0);
+        const advDisplay = a.advance !== undefined ? a.advance : (parentOrder ? parentOrder.advance : 0);
+        const dueDisplay = a.due !== undefined ? a.due : (parentOrder ? parentOrder.due : 0);
+        const methodDisplay = a.paymentMethod || (parentOrder ? parentOrder.paymentMethod : 'Cash');
+        const recDisplay = a.receivedDate || (parentOrder ? parentOrder.receivedDate : '-');
+        const delDisplay = a.deliveryDate || (parentOrder ? parentOrder.deliveryDate : '-');
+        const remarksDisplay = a.remarks || (parentOrder ? parentOrder.remarks : '-');
+        const styleSummary = summarizeDrawings(a.drawingSelections);
+
+        return `
+          <div class="record-card animate-fade">
+            <div style="width:100%;">
+              <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap;">
+                <div>
+                  <strong style="color:var(--primary);">${a.serialId || 'ID'}</strong>
+                  <span> | Inv #${a.invoiceNo}</span>
+                  <span> — <strong class="sensitive-customer">${a.customerName}</strong></span>
+                  ${phoneStr ? `<small class="sensitive-customer" style="color:#475569;">(${phoneStr})</small>` : ''}
+                </div>
+                <span class="badge ${a.approved ? 'badge-approved' : 'badge-pending'}">${a.approved ? 'APPROVED & SYNCED' : 'PENDING REQUEST'}</span>
+              </div>
+
+              <p style="font-size:0.88rem; margin:6px 0; color:#1e293b;"><strong>Request Note:</strong> ${a.note}</p>
+
+              <div style="display:flex; gap:6px; flex-wrap:wrap; margin-top:8px;">
+                <button type="button" class="btn-secondary btn-sm" onclick="toggleAltPreview('${a.id}')">${isOpen ? 'Close Full Preview' : 'Full Preview'}</button>
+                <button type="button" class="btn-warning btn-sm" onclick="openEditAlteration('${a.id}')">Edit Request</button>
+                ${!a.approved ? `<button type="button" class="btn-primary btn-sm" onclick="triggerAnim(this, 'animate-save', () => approveAlteration('${a.id}'))">✓ Customer OK — Approve & Update Main</button>` : '<span style="color:#16a34a; font-weight:700; font-size:0.84rem; align-self:center;">✔ Main Measurement Updated</span>'}
+                <button type="button" class="btn-danger btn-sm" onclick="deleteAlterationWithAnim(this, '${a.id}')">Delete</button>
+              </div>
+
+              ${isOpen ? `
+                <div class="alt-preview-box animate-fade">
+                  <div style="font-weight:700; color:var(--primary); margin-bottom:8px;">Complete Alteration Request Preview</div>
+                  <div class="grid-form" style="margin-bottom:8px; gap:8px;">
+                    <div><strong>ID:</strong> ${a.serialId || '-'} | <strong>Invoice:</strong> #${a.invoiceNo}</div>
+                    <div class="sensitive-customer"><strong>Customer:</strong> ${a.customerName} (${phoneStr})</div>
+                    <div><strong>Received:</strong> ${recDisplay} | <strong>Delivery:</strong> ${delDisplay}</div>
+                    <div><strong>Qty:</strong> ${qtyDisplay} | <strong>Fabric:</strong> ${fabricDisplay}</div>
+                  </div>
+                  <div style="margin-bottom:6px;"><strong>Measurements (with ১ সুতা):</strong></div>
+                  <div class="pill-row">
+                    <span class="pill">L: ${formatValWithSutaSteps(m.length, ss.length)}</span>
+                    <span class="pill">Sh: ${formatValWithSutaSteps(m.shoulder, ss.shoulder)}</span>
+                    <span class="pill">Sl: ${formatValWithSutaSteps(m.fullsleeve, ss.fullsleeve)}</span>
+                    <span class="pill">Ch: ${formatValWithSutaSteps(m.chest, ss.chest)}</span>
+                    <span class="pill">W: ${formatValWithSutaSteps(m.widen, ss.widen)}</span>
+                    <span class="pill">N: ${formatValWithSutaSteps(m.neck, ss.neck)}</span>
+                    <span class="pill">Hem: ${formatValWithSutaSteps(m.hem || m.cuff || '-', ss.hem)}</span>
+                  </div>
+                  <div style="font-size:0.82rem; color:#334155; margin-top:6px;">
+                    <strong>Sleeve (Top/Mid/Bot):</strong> ${formatValWithSutaSteps(ex.sleeveTop, ss.sleeveTop)} / ${formatValWithSutaSteps(ex.sleeveMid, ss.sleeveMid)} / ${formatValWithSutaSteps(ex.sleeveBot, ss.sleeveBot)} |
+                    <strong>Body (Sadar Kamel/Hip):</strong> ${formatValWithSutaSteps(ex.sadarKamel, ss.sadarKamel)} / ${formatValWithSutaSteps(ex.hip, ss.hip)}
+                  </div>
+                  <div style="font-size:0.82rem; color:#334155; margin-top:6px;">
+                    <strong>Type, Style & Comment Details:</strong> ${styleSummary}
+                  </div>
+                  <div style="font-size:0.82rem; color:#334155; margin-top:6px;">
+                    <strong>Remarks:</strong> ${remarksDisplay}
+                  </div>
+                  <div class="sensitive-finance" style="font-size:0.84rem; font-weight:700; margin-top:6px; color:#0f172a;">
+                    Total: ${totalDisplay} SAR | Advance: ${advDisplay} SAR | Due: ${dueDisplay} SAR (${methodDisplay})
+                  </div>
+                  ${a.invoicePhoto ? `<div style="margin-top:8px;"><img src="${a.invoicePhoto}" style="max-height:140px; border-radius:6px; border:1px solid #cbd5e1;" /></div>` : ''}
+                </div>
+              ` : ''}
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function openEditAlteration(altId) {
+      const alt = alterations.find(a => a.id === altId);
+      if (!alt) return;
+
+      switchAltSection('create');
+      document.getElementById('edit-alt-id').value = alt.id;
+      document.getElementById('alt-form-heading').textContent = `Edit Alteration Request (${alt.serialId || ''} | Inv #${alt.invoiceNo})`;
+
+      const sel = document.getElementById('alt-customer-select');
+      if (alt.orderId && Array.from(sel.options).some(opt => opt.value === alt.orderId)) {
+        sel.value = alt.orderId;
+      }
+
+      document.getElementById('alt-serial-id-display').textContent = alt.serialId || getNextSerialId();
+      document.getElementById('alt-inv-no').value = alt.invoiceNo || '';
+      document.getElementById('alt-cust-name').value = alt.customerName || '';
+      document.getElementById('alt-cust-phone').value = (alt.phone || '').replace(/^\+966/, '');
+      document.getElementById('alt-note').value = alt.note || '';
+      if (alt.receivedDate) document.getElementById('alt-rec-date').value = alt.receivedDate;
+      if (alt.deliveryDaysOption) document.getElementById('alt-del-days-select').value = alt.deliveryDaysOption;
+      if (alt.deliveryDate) document.getElementById('alt-del-date').value = alt.deliveryDate;
+
+      const m = alt.newMeasurements || {};
+      document.getElementById('alt-length').value = m.length && m.length !== '-' ? m.length : '';
+      document.getElementById('alt-shoulder').value = m.shoulder && m.shoulder !== '-' ? m.shoulder : '';
+      document.getElementById('alt-sleeve').value = m.fullsleeve && m.fullsleeve !== '-' ? m.fullsleeve : '';
+      document.getElementById('alt-chest').value = m.chest && m.chest !== '-' ? m.chest : '';
+      document.getElementById('alt-widen').value = m.widen && m.widen !== '-' ? m.widen : '';
+      document.getElementById('alt-neck').value = m.neck && m.neck !== '-' ? m.neck : '';
+      document.getElementById('alt-hem').value = (m.hem || m.cuff || '') && (m.hem || m.cuff) !== '-' ? (m.hem || m.cuff) : '';
+
+      const ss = alt.sutaSteps || {};
+      sutaStepsState['alt-length'] = ss.length || 0;
+      sutaStepsState['alt-shoulder'] = ss.shoulder || 0;
+      sutaStepsState['alt-sleeve'] = ss.fullsleeve || 0;
+      sutaStepsState['alt-chest'] = ss.chest || 0;
+      sutaStepsState['alt-widen'] = ss.widen || 0;
+      sutaStepsState['alt-neck'] = ss.neck || 0;
+      sutaStepsState['alt-hem'] = ss.hem || 0;
+      sutaStepsState['alt-sl-top'] = ss.sleeveTop || 0;
+      sutaStepsState['alt-sl-mid'] = ss.sleeveMid || 0;
+      sutaStepsState['alt-sl-bot'] = ss.sleeveBot || 0;
+      sutaStepsState['alt-bd-chest'] = ss.sadarKamel || 0;
+      sutaStepsState['alt-bd-hip'] = ss.hip || 0;
+      ['alt-length', 'alt-shoulder', 'alt-sleeve', 'alt-chest', 'alt-widen', 'alt-neck', 'alt-hem', 'alt-sl-top', 'alt-sl-mid', 'alt-sl-bot', 'alt-bd-chest', 'alt-bd-hip'].forEach(renderMeasurementStepper);
+
+      const ex = alt.extraMeasurements || {};
+      document.getElementById('alt-sl-top').value = ex.sleeveTop && ex.sleeveTop !== '-' ? ex.sleeveTop : '';
+      document.getElementById('alt-sl-mid').value = ex.sleeveMid && ex.sleeveMid !== '-' ? ex.sleeveMid : '';
+      document.getElementById('alt-sl-bot').value = ex.sleeveBot && ex.sleeveBot !== '-' ? ex.sleeveBot : '';
+      document.getElementById('alt-bd-chest').value = ex.sadarKamel && ex.sadarKamel !== '-' ? ex.sadarKamel : '';
+      document.getElementById('alt-bd-hip').value = ex.hip && ex.hip !== '-' ? ex.hip : '';
+
+      initAltDrawingState(alt.drawingSelections);
+
+      if (alt.fabricSource) {
+        document.getElementById('alt-fab-source').value = alt.fabricSource;
+        toggleAltFabricDropdown();
+      }
+      document.getElementById('alt-fab-custom-note').value = alt.fabric || '';
+      document.getElementById('alt-thobe-qty').value = alt.qty || 1;
+      document.getElementById('alt-pay-total').value = alt.total ?? '';
+      document.getElementById('alt-pay-advance').value = alt.advance ?? '';
+      document.getElementById('alt-pay-due').value = alt.due ?? 0;
+      document.getElementById('alt-pay-method').value = alt.paymentMethod === 'Seva Pay' ? 'Seva Card' : (alt.paymentMethod || 'Cash');
+      document.getElementById('alt-order-remarks').value = alt.remarks || '';
+      pendingAltPhotoBase64 = alt.invoicePhoto || '';
+      document.getElementById('alt-photo-preview-box').innerHTML = alt.invoicePhoto
+        ? `<img src="${alt.invoicePhoto}" style="max-height:110px; border-radius:6px; border:1px solid #cbd5e1;" />`
+        : '';
+
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function saveAlterationRequest() {
+      const btn = document.getElementById('alt-submit-btn');
+      const custName = document.getElementById('alt-cust-name').value.trim();
+      const custPhone = document.getElementById('alt-cust-phone').value.trim().replace(/^0+/, '');
+      const noteVal = document.getElementById('alt-note').value.trim();
+
+      if (!custName) {
+        alert('Please enter Customer Name (الاسم).');
+        document.getElementById('alt-cust-name').focus();
+        return;
+      }
+      if (!noteVal) {
+        alert('Please enter Alteration Notes / Request Details.');
+        document.getElementById('alt-note').focus();
+        return;
+      }
+
+      const editAltId = document.getElementById('edit-alt-id').value;
+      const existingAlt = alterations.find(a => a.id === editAltId);
+      const orderId = document.getElementById('alt-customer-select').value;
+      const o = orders.find(item => item.id === orderId);
+
+      const fabSource = document.getElementById('alt-fab-source').value;
+      let fabSelected = 'Customer Own Fabric';
+      if (fabSource === 'Shop Fabric') {
+        const chosenCat = document.getElementById('alt-fab-catalog-select').value;
+        fabSelected = chosenCat === '__CUSTOM__'
+          ? (document.getElementById('alt-fab-custom-catalog-input').value.trim() || 'Custom Fabric')
+          : chosenCat;
+      }
+      const fabNote = document.getElementById('alt-fab-custom-note').value.trim();
+      const combinedFabric = fabNote || fabSelected;
+
+      const total = parseFloat(document.getElementById('alt-pay-total').value) || 0;
+      const advance = parseFloat(document.getElementById('alt-pay-advance').value) || 0;
+      const due = Math.max(0, total - advance);
+      const rawMethod = document.getElementById('alt-pay-method').value;
+      const paymentMethod = rawMethod === 'Seva Pay' ? 'Seva Card' : rawMethod;
+
+      const payload = {
+        id: existingAlt ? existingAlt.id : 'ALT-' + Date.now(),
+        orderId: o ? o.id : (existingAlt ? existingAlt.orderId : ''),
+        serialId: document.getElementById('alt-serial-id-display').textContent || (o ? o.serialId : getNextSerialId()),
+        invoiceNo: document.getElementById('alt-inv-no').value.trim() || (o ? o.invoiceNo : '0000'),
+        customerName: custName,
+        phone: custPhone ? '+966' + custPhone : (o ? '+966' + o.phone : ''),
+        receivedDate: document.getElementById('alt-rec-date').value || new Date().toISOString().split('T')[0],
+        deliveryDaysOption: document.getElementById('alt-del-days-select').value,
+        deliveryDate: document.getElementById('alt-del-date').value || new Date().toISOString().split('T')[0],
+        note: noteVal,
+        newMeasurements: {
+          length: document.getElementById('alt-length').value || (o ? o.measurements.length : '-'),
+          shoulder: document.getElementById('alt-shoulder').value || (o ? o.measurements.shoulder : '-'),
+          fullsleeve: document.getElementById('alt-sleeve').value || (o ? o.measurements.fullsleeve : '-'),
+          chest: document.getElementById('alt-chest').value || (o ? o.measurements.chest : '-'),
+          widen: document.getElementById('alt-widen').value || (o ? o.measurements.widen : '-'),
+          neck: document.getElementById('alt-neck').value || (o ? o.measurements.neck : '-'),
+          hem: document.getElementById('alt-hem').value || (o ? (o.measurements.hem || o.measurements.cuff) : '-') || '-'
+        },
+        sutaSteps: {
+          length: sutaStepsState['alt-length'] || 0,
+          shoulder: sutaStepsState['alt-shoulder'] || 0,
+          fullsleeve: sutaStepsState['alt-sleeve'] || 0,
+          chest: sutaStepsState['alt-chest'] || 0,
+          widen: sutaStepsState['alt-widen'] || 0,
+          neck: sutaStepsState['alt-neck'] || 0,
+          hem: sutaStepsState['alt-hem'] || 0,
+          sleeveTop: sutaStepsState['alt-sl-top'] || 0,
+          sleeveMid: sutaStepsState['alt-sl-mid'] || 0,
+          sleeveBot: sutaStepsState['alt-sl-bot'] || 0,
+          sadarKamel: sutaStepsState['alt-bd-chest'] || 0,
+          hip: sutaStepsState['alt-bd-hip'] || 0
+        },
+        extraMeasurements: {
+          sleeveTop: document.getElementById('alt-sl-top').value || '-',
+          sleeveMid: document.getElementById('alt-sl-mid').value || '-',
+          sleeveBot: document.getElementById('alt-sl-bot').value || '-',
+          sadarKamel: document.getElementById('alt-bd-chest').value || '-',
+          hip: document.getElementById('alt-bd-hip').value || '-'
+        },
+        drawingSelections: JSON.parse(JSON.stringify(altDrawingState)),
+        fabricSource: fabSource,
+        fabric: combinedFabric,
+        qty: parseInt(document.getElementById('alt-thobe-qty').value, 10) || 1,
+        total,
+        advance,
+        due,
+        paymentMethod,
+        remarks: document.getElementById('alt-order-remarks').value,
+        invoicePhoto: pendingAltPhotoBase64 || (existingAlt ? existingAlt.invoicePhoto : ''),
+        approved: false
+      };
+
+      triggerAnim(btn, 'animate-save', () => {
+        if (existingAlt) {
+          const idx = alterations.findIndex(a => a.id === editAltId);
+          alterations[idx] = payload;
+        } else {
+          alterations.unshift(payload);
+        }
+        expandedAltId = payload.id;
+        altFilterMode = 'pending';
+        saveLocal();
+        resetAlterationForm();
+        switchAltSection('requests');
+      });
+    }
+
+    function approveAlteration(altId) {
+      const alt = alterations.find(a => a.id === altId);
+      if (!alt) return;
+      const mainOrder = orders.find(o => o.id === alt.orderId);
+      if (mainOrder) {
+        mainOrder.measurements = { ...mainOrder.measurements, ...alt.newMeasurements };
+        if (alt.sutaSteps) {
+          mainOrder.sutaSteps = { ...(mainOrder.sutaSteps || {}), ...alt.sutaSteps };
+        }
+        if (alt.extraMeasurements) {
+          mainOrder.extraMeasurements = { ...(mainOrder.extraMeasurements || {}), ...alt.extraMeasurements };
+        }
+        if (alt.drawingSelections) {
+          mainOrder.drawingSelections = JSON.parse(JSON.stringify(alt.drawingSelections));
+        }
+        if (alt.fabric) mainOrder.fabric = alt.fabric;
+        if (alt.qty) mainOrder.qty = alt.qty;
+        if (alt.deliveryDate) mainOrder.deliveryDate = alt.deliveryDate;
+        if (alt.remarks !== undefined) mainOrder.remarks = alt.remarks;
+      }
+      alt.approved = true;
+      saveLocal();
+      renderOrderList();
+      renderAlterationList();
+    }
+
+    function deleteAlterationWithAnim(buttonEl, altId) {
+      const cardEl = buttonEl ? buttonEl.closest('.record-card') : null;
+      if (cardEl) cardEl.classList.add('animate-delete-card');
+      setTimeout(() => {
+        alterations = alterations.filter(a => a.id !== altId);
+        if (expandedAltId === altId) expandedAltId = null;
+        saveLocal();
+        renderAlterationList();
+      }, 360);
+    }
+
+    // ==================== FABRIC & COLOR CATALOG ====================
+    document.getElementById('catalog-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btn = document.getElementById('cat-submit-btn');
+      triggerAnim(btn, 'animate-save');
+      const file = document.getElementById('cat-photo-file').files[0];
+      const photo = await fileToBase64(file);
+
+      catalog.unshift({
+        id: 'CAT-' + Date.now(),
+        origin: document.getElementById('cat-origin').value.trim(),
+        type: document.getElementById('cat-type').value.trim(),
+        color: document.getElementById('cat-color').value.trim(),
+        photo,
+        active: true
+      });
+
+      saveLocal();
+      document.getElementById('catalog-form').reset();
+      renderCatalog();
+    });
+
+    function renderCatalog() {
+      const box = document.getElementById('catalog-container');
+      box.innerHTML = catalog.map(c => `
+        <div class="cat-card animate-fade" style="opacity: ${c.active ? '1' : '0.55'};">
+          ${c.photo ? `<img src="${c.photo}" alt="${c.type}" />` : `<div style="height:140px; background:#e2e8f0; display:flex; align-items:center; justify-content:center; color:#475569; font-weight:700;">${c.color}</div>`}
+          <div class="cat-card-body">
+            <strong>${c.type}</strong>
+            <div style="font-size:0.85rem; color:#475569;">Origin: ${c.origin} | Color: ${c.color}</div>
+            <div style="margin-top:10px; display:flex; justify-content:space-between; align-items:center;">
+              <label style="display:flex; align-items:center; gap:5px; cursor:pointer;">
+                <input type="checkbox" ${c.active ? 'checked' : ''} onchange="toggleCatalogActive('${c.id}')" />
+                Selected
+              </label>
+              <button type="button" class="btn-danger btn-sm" onclick="deleteCatalogWithAnim(this, '${c.id}')">X</button>
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function toggleCatalogActive(id) {
+      const item = catalog.find(c => c.id === id);
+      if (item) item.active = !item.active;
+      saveLocal();
+      renderCatalog();
+    }
+
+    function deleteCatalogWithAnim(buttonEl, id) {
+      const cardEl = buttonEl ? buttonEl.closest('.cat-card') : null;
+      if (cardEl) cardEl.classList.add('animate-delete-card');
+      setTimeout(() => {
+        catalog = catalog.filter(c => c.id !== id);
+        saveLocal();
+        renderCatalog();
+      }, 360);
+    }
+
+    // ==================== MONTHLY STATEMENT ====================
+    function renderMonthlyStatement() {
+      const month = document.getElementById('month-picker').value;
+      const list = orders.filter(o => o.receivedDate && o.receivedDate.startsWith(month));
+
+      const isSevaCard = (m) => m === 'Seva Card' || m === 'Seva Pay';
+      const totalOrders = list.length;
+      const totalThobes = list.reduce((s, o) => s + (parseInt(o.qty, 10) || 1), 0);
+      const totalAmt = list.reduce((s, o) => s + o.total, 0);
+      const totalPaid = list.reduce((s, o) => s + o.advance, 0);
+      const totalDue = list.reduce((s, o) => s + o.due, 0);
+      const cashAmt = list.filter(o => o.paymentMethod === 'Cash').reduce((s, o) => s + o.advance, 0);
+      const onlineAmt = list.filter(o => isSevaCard(o.paymentMethod)).reduce((s, o) => s + o.advance, 0);
+
+      document.getElementById('ms-orders').textContent = totalOrders;
+      document.getElementById('ms-thobes').textContent = totalThobes;
+      document.getElementById('ms-total').textContent = totalAmt + ' SAR';
+      document.getElementById('ms-paid').textContent = totalPaid + ' SAR';
+      document.getElementById('ms-cash').textContent = cashAmt + ' SAR';
+      document.getElementById('ms-online').textContent = onlineAmt + ' SAR';
+      document.getElementById('ms-due').textContent = totalDue + ' SAR';
+
+      const tbody = document.getElementById('statement-tbody');
+      tbody.innerHTML = list.map(o => {
+        const curMethod = isSevaCard(o.paymentMethod) ? 'Seva Card' : 'Cash';
+        return `
+          <tr>
+            <td>${o.receivedDate}</td>
+            <td><strong>${o.serialId || ''}</strong> <small>(#${o.invoiceNo})</small><br/><span class="sensitive-customer"><strong>${o.customerName}</strong> • +966${o.phone}</span></td>
+            <td>${o.qty}</td>
+            <td class="sensitive-finance">${o.total} SAR</td>
+            <td class="sensitive-finance">Paid: ${o.advance} | Due: ${o.due}</td>
+            <td class="sensitive-finance">
+              <button type="button" class="btn-sm ${o.isPaid ? 'btn-whatsapp' : 'btn-danger'}" onclick="triggerAnim(this, 'animate-save', () => toggleStatementPaid('${o.id}'))">
+                ${o.isPaid ? '✔ Paid' : '✘ Unpaid'}
+              </button>
+            </td>
+            <td class="sensitive-finance">
+              <select onchange="changePaymentMethod('${o.id}', this.value)" style="padding:4px 8px;">
+                <option value="Cash" ${curMethod === 'Cash' ? 'selected' : ''}>Cash</option>
+                <option value="Seva Card" ${curMethod === 'Seva Card' ? 'selected' : ''}>Seva Card</option>
+              </select>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function toggleStatementPaid(id) {
+      const o = orders.find(item => item.id === id);
+      if (!o) return;
+      o.isPaid = !o.isPaid;
+      if (o.isPaid) {
+        o.advance = o.total;
+        o.due = 0;
+      } else {
+        o.due = o.total - o.advance;
+      }
+      saveLocal();
+      renderMonthlyStatement();
+      updateTodaySummary();
+    }
+
+    function changePaymentMethod(id, method) {
+      const o = orders.find(item => item.id === id);
+      if (o) o.paymentMethod = method === 'Seva Pay' ? 'Seva Card' : method;
+      saveLocal();
+      renderMonthlyStatement();
+      updateTodaySummary();
+    }
+
+    // ==================== TODAY SUMMARY ====================
+    function getTodayMetrics() {
+      const today = new Date().toISOString().split('T')[0];
+      const newToday = orders.filter(o => o.receivedDate === today);
+      const delToday = orders.filter(o => o.delivered && o.deliveredDate === today);
+      const isSevaCard = (m) => m === 'Seva Card' || m === 'Seva Pay';
+
+      const newOrdersCount = newToday.length;
+      const newThobesQty = newToday.reduce((s, o) => s + (parseInt(o.qty, 10) || 1), 0);
+      const orderValue = newToday.reduce((s, o) => s + (o.total || 0), 0);
+      const orderPaidToday = newToday.reduce((s, o) => s + (o.advance || 0), 0);
+      const orderDueToday = newToday.reduce((s, o) => s + (o.due || 0), 0);
+
+      const delCount = delToday.length;
+      const delThobesQty = delToday.reduce((s, o) => s + (parseInt(o.qty, 10) || 1), 0);
+      const delValue = delToday.reduce((s, o) => s + (o.total || 0), 0);
+      const delCash = delToday.filter(o => o.paymentMethod === 'Cash').reduce((s, o) => s + (o.total || 0), 0);
+      const delSevaCard = delToday.filter(o => isSevaCard(o.paymentMethod)).reduce((s, o) => s + (o.total || 0), 0);
+
+      const cashReceivedToday =
+        newToday.filter(o => o.paymentMethod === 'Cash').reduce((s, o) => s + (o.advance || 0), 0) +
+        delCash;
+      const sevaCardReceivedToday =
+        newToday.filter(o => isSevaCard(o.paymentMethod)).reduce((s, o) => s + (o.advance || 0), 0) +
+        delSevaCard;
+      const totalReceivedToday = cashReceivedToday + sevaCardReceivedToday;
+
+      return {
+        today,
+        newOrdersCount,
+        newThobesQty,
+        orderValue,
+        orderPaidToday,
+        orderDueToday,
+        delCount,
+        delThobesQty,
+        delValue,
+        delCash,
+        delSevaCard,
+        cashReceivedToday,
+        sevaCardReceivedToday,
+        totalReceivedToday
+      };
+    }
+
+    function updateTodaySummary() {
+      const m = getTodayMetrics();
+      document.getElementById('td-new-orders').textContent = `${m.newOrdersCount}`;
+      document.getElementById('td-new-thobes-qty').textContent = `${m.newThobesQty}`;
+      document.getElementById('td-order-value').textContent = `${m.orderValue} SAR`;
+      document.getElementById('td-delivered-count').textContent = `${m.delCount}`;
+      document.getElementById('td-del-thobes-qty').textContent = `${m.delThobesQty}`;
+      document.getElementById('td-delivered-value').textContent = `${m.delValue} SAR`;
+      document.getElementById('td-total-received').textContent = `${m.totalReceivedToday} SAR`;
+      document.getElementById('td-cash').textContent = `${m.cashReceivedToday} SAR`;
+      document.getElementById('td-seva-card').textContent = `${m.sevaCardReceivedToday} SAR`;
+    }
+
+    function saveOwnerNumber() {
+      localStorage.setItem('owner_wa', document.getElementById('owner-wa-number').value.trim());
+      alert('Owner WhatsApp number saved.');
+    }
+
+    function sendOwnerDailyReport() {
+      const m = getTodayMetrics();
+      const ownerNum = localStorage.getItem('owner_wa') || document.getElementById('owner-wa-number').value.trim();
+
+      const report = `*Daily Business Summary (${m.today})*\n` +
+        `Shop: Al-Ada'a Al-Shamikh For Men's Tailoring\n\n` +
+        `• Orders Received Today: ${m.newOrdersCount}\n` +
+        `  - Total Thobes Qty: ${m.newThobesQty}\n` +
+        `  - Order Value: ${m.orderValue} SAR\n` +
+        `  - Paid: ${m.orderPaidToday} SAR\n` +
+        `  - Due: ${m.orderDueToday} SAR\n\n` +
+        `• Deliveries Made Today: ${m.delCount}\n` +
+        `  - Delivered Thobes Qty: ${m.delThobesQty}\n` +
+        `  - Delivery Value: ${m.delValue} SAR\n` +
+        `  - Cash: ${m.delCash} SAR | Seva Card: ${m.delSevaCard} SAR\n\n` +
+        `• Total Received (${m.today}): ${m.totalReceivedToday} SAR\n` +
+        `  - Cash: ${m.cashReceivedToday} SAR\n` +
+        `  - Seva Card: ${m.sevaCardReceivedToday} SAR\n\n` +
+        `Al-Ada'a Al-Shamikh For Men's Tailoring`;
+
+      window.open(`https://wa.me/${ownerNum}?text=${encodeURIComponent(report)}`, '_blank');
+    }
+
+    // ==================== OFFER SENDER ====================
+    function renderOfferList() {
+      const box = document.getElementById('offer-customer-list');
+      const uniqueMap = new Map();
+      orders.forEach(o => { if (!uniqueMap.has(o.phone)) uniqueMap.set(o.phone, o); });
+      const customers = Array.from(uniqueMap.values());
+
+      if (!customers.length) {
+        box.innerHTML = '<p style="color:#64748b;">No saved customers yet.</p>';
+        return;
+      }
+
+      box.innerHTML = customers.map(c => `
+        <div class="record-card animate-fade">
+          <div class="sensitive-customer">
+            <strong>${c.customerName}</strong> — +966${c.phone}
+          </div>
+          <button type="button" class="btn-whatsapp btn-sm" onclick="triggerAnim(this, 'animate-wa', () => sendSingleOffer('${c.phone}', '${c.customerName.replace(/'/g, "\\'")}'))">
+            Send Offer (WhatsApp)
+          </button>
+        </div>
+      `).join('');
+    }
+
+    function sendSingleOffer(phone, name) {
+      const raw = document.getElementById('offer-template').value;
+      const body = raw.replace(/\{name\}/g, name);
+      const fullMsg = `${body}\n\nAl-Ada'a Al-Shamikh For Men's Tailoring`;
+      window.open(`https://wa.me/966${phone}?text=${encodeURIComponent(fullMsg)}`, '_blank');
+    }
+
+    // Init
+    if (localStorage.getItem('owner_wa')) {
+      document.getElementById('owner-wa-number').value = localStorage.getItem('owner_wa');
+    }
+    resetAllSutaSteps();
+    refreshEmailDisplay();
+    setDefaultDates();
+    syncCatalogDropdowns();
+    initDrawingState();
+    initAltDrawingState(null);
+    refreshSerialDisplay();
+    updateTodaySummary();
+  </script>
+</body>
+</html>
