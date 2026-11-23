@@ -3743,23 +3743,28 @@ New thobe fabrics have arrived at Al-Ada'a Al-Shamikh For Men's Tailoring. Visit
     refreshSerialDisplay();
     updateTodaySummary();
   </script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
     const supabaseClient = supabase.createClient(
       'https://iqrvybxryeboccduncsn.supabase.co',
       'sb_publishable_EGu2-hT4sjhlwGe7_FMHEQ_s2GQBtkK'
     );
 
-    // JS অবজেক্টকে Supabase কলামের ফরম্যাটে রূপান্তর
+    let isSyncingFromCloud = false;
+    let syncedIds = {
+      orders: new Set(),
+      catalog: new Set(),
+      alterations: new Set()
+    };
+
     function mapOrderToDB(o) {
       return {
-        id: o.id,
+        id: String(o.id),
         serial_id: o.serialId || '',
         invoice_no: o.invoiceNo || '',
         customer_name: o.customerName || '',
         phone: o.phone || '',
-        qty: o.qty || 1,
+        qty: parseInt(o.qty, 10) || 1,
         received_date: o.receivedDate || '',
         delivery_days_option: o.deliveryDaysOption || '',
         delivery_date: o.deliveryDate || '',
@@ -3768,11 +3773,11 @@ New thobe fabrics have arrived at Al-Ada'a Al-Shamikh For Men's Tailoring. Visit
         extra_measurements: o.extraMeasurements || {},
         drawing_selections: o.drawingSelections || {},
         fabric: o.fabric || '',
-        total: o.total || 0,
-        advance: o.advance || 0,
-        due: o.due || 0,
+        total: Number(o.total) || 0,
+        advance: Number(o.advance) || 0,
+        due: Number(o.due) || 0,
         is_paid: !!o.isPaid,
-        payment_method: o.paymentMethod || 'Cash',
+        payment_method: o.paymentMethod === 'Seva Pay' ? 'Seva Card' : (o.paymentMethod || 'Cash'),
         delivered: !!o.delivered,
         delivered_date: o.deliveredDate || '',
         remarks: o.remarks || '',
@@ -3782,25 +3787,25 @@ New thobe fabrics have arrived at Al-Ada'a Al-Shamikh For Men's Tailoring. Visit
 
     function mapOrderFromDB(r) {
       return {
-        id: r.id,
-        serialId: r.serial_id,
-        invoiceNo: r.invoice_no,
-        customerName: r.customer_name,
-        phone: r.phone,
-        qty: r.qty || 1,
-        receivedDate: r.received_date,
-        deliveryDaysOption: r.delivery_days_option,
-        deliveryDate: r.delivery_date,
+        id: String(r.id),
+        serialId: r.serial_id || '',
+        invoiceNo: r.invoice_no || '',
+        customerName: r.customer_name || '',
+        phone: r.phone || '',
+        qty: parseInt(r.qty, 10) || 1,
+        receivedDate: r.received_date || '',
+        deliveryDaysOption: r.delivery_days_option || '',
+        deliveryDate: r.delivery_date || '',
         measurements: r.measurements || {},
         sutaSteps: r.suta_steps || {},
         extraMeasurements: r.extra_measurements || {},
         drawingSelections: r.drawing_selections || {},
-        fabric: r.fabric,
+        fabric: r.fabric || '',
         total: Number(r.total) || 0,
         advance: Number(r.advance) || 0,
         due: Number(r.due) || 0,
         isPaid: !!r.is_paid,
-        paymentMethod: r.payment_method || 'Cash',
+        paymentMethod: r.payment_method === 'Seva Pay' ? 'Seva Card' : (r.payment_method || 'Cash'),
         delivered: !!r.delivered,
         deliveredDate: r.delivered_date || '',
         remarks: r.remarks || '',
@@ -3808,9 +3813,31 @@ New thobe fabrics have arrived at Al-Ada'a Al-Shamikh For Men's Tailoring. Visit
       };
     }
 
+    function mapCatalogToDB(c) {
+      return {
+        id: String(c.id),
+        origin: c.origin || '',
+        type: c.type || '',
+        color: c.color || '',
+        photo: c.photo || '',
+        active: c.active === undefined ? true : !!c.active
+      };
+    }
+
+    function mapCatalogFromDB(r) {
+      return {
+        id: String(r.id),
+        origin: r.origin || '',
+        type: r.type || '',
+        color: r.color || '',
+        photo: r.photo || '',
+        active: r.active === undefined ? true : !!r.active
+      };
+    }
+
     function mapAltToDB(a) {
       return {
-        id: a.id,
+        id: String(a.id),
         order_id: a.orderId || '',
         serial_id: a.serialId || '',
         invoice_no: a.invoiceNo || '',
@@ -3826,11 +3853,11 @@ New thobe fabrics have arrived at Al-Ada'a Al-Shamikh For Men's Tailoring. Visit
         drawing_selections: a.drawingSelections || {},
         fabric_source: a.fabricSource || '',
         fabric: a.fabric || '',
-        qty: a.qty || 1,
-        total: a.total || 0,
-        advance: a.advance || 0,
-        due: a.due || 0,
-        payment_method: a.paymentMethod || 'Cash',
+        qty: parseInt(a.qty, 10) || 1,
+        total: Number(a.total) || 0,
+        advance: Number(a.advance) || 0,
+        due: Number(a.due) || 0,
+        payment_method: a.paymentMethod === 'Seva Pay' ? 'Seva Card' : (a.paymentMethod || 'Cash'),
         remarks: a.remarks || '',
         invoice_photo: a.invoicePhoto || '',
         approved: !!a.approved
@@ -3839,56 +3866,101 @@ New thobe fabrics have arrived at Al-Ada'a Al-Shamikh For Men's Tailoring. Visit
 
     function mapAltFromDB(r) {
       return {
-        id: r.id,
-        orderId: r.order_id,
-        serialId: r.serial_id,
-        invoiceNo: r.invoice_no,
-        customerName: r.customer_name,
-        phone: r.phone,
-        receivedDate: r.received_date,
-        deliveryDaysOption: r.delivery_days_option,
-        deliveryDate: r.delivery_date,
-        note: r.note,
+        id: String(r.id),
+        orderId: r.order_id || '',
+        serialId: r.serial_id || '',
+        invoiceNo: r.invoice_no || '',
+        customerName: r.customer_name || '',
+        phone: r.phone || '',
+        receivedDate: r.received_date || '',
+        deliveryDaysOption: r.delivery_days_option || '',
+        deliveryDate: r.delivery_date || '',
+        note: r.note || '',
         newMeasurements: r.new_measurements || {},
         sutaSteps: r.suta_steps || {},
         extraMeasurements: r.extra_measurements || {},
         drawingSelections: r.drawing_selections || {},
         fabricSource: r.fabric_source || '',
-        fabric: r.fabric,
-        qty: r.qty || 1,
+        fabric: r.fabric || '',
+        qty: parseInt(r.qty, 10) || 1,
         total: Number(r.total) || 0,
         advance: Number(r.advance) || 0,
         due: Number(r.due) || 0,
-        paymentMethod: r.payment_method || 'Cash',
+        paymentMethod: r.payment_method === 'Seva Pay' ? 'Seva Card' : (r.payment_method || 'Cash'),
         remarks: r.remarks || '',
         invoicePhoto: r.invoice_photo || '',
         approved: !!r.approved
       };
     }
 
-    // আগের saveLocal ফাংশনকে আপডেট করে Supabase-এও সিঙ্ক করা
+    async function syncDeletedRows(tableName, currentList, trackedSet) {
+      const currentIds = new Set(currentList.map(item => String(item.id)));
+      const deletedIds = [...trackedSet].filter(id => !currentIds.has(id));
+
+      for (const id of deletedIds) {
+        const { error } = await supabaseClient.from(tableName).delete().eq('id', id);
+        if (error) {
+          console.error(`Supabase delete error (${tableName}, id=${id}):`, error);
+        } else {
+          trackedSet.delete(id);
+        }
+      }
+    }
+
+    function computeMaxSerial(orderList) {
+      let maxNum = 0;
+      orderList.forEach(o => {
+        if (o.serialId) {
+          const m = String(o.serialId).match(/(\d+)$/);
+          if (m) {
+            const n = parseInt(m[1], 10);
+            if (n > maxNum) maxNum = n;
+          }
+        }
+      });
+      return Math.max(maxNum, orderList.length);
+    }
+
     const originalSaveLocal = saveLocal;
     saveLocal = async function() {
       originalSaveLocal();
+      if (isSyncingFromCloud) return;
+
       try {
+        await syncDeletedRows('orders', orders, syncedIds.orders);
+        await syncDeletedRows('catalog', catalog, syncedIds.catalog);
+        await syncDeletedRows('alterations', alterations, syncedIds.alterations);
+
         if (orders.length > 0) {
-          await supabaseClient.from('orders').upsert(orders.map(mapOrderToDB));
+          const { error } = await supabaseClient
+            .from('orders')
+            .upsert(orders.map(mapOrderToDB), { onConflict: 'id' });
+          if (error) console.error('Supabase orders upsert error:', error);
+          orders.forEach(o => syncedIds.orders.add(String(o.id)));
         }
+
         if (catalog.length > 0) {
-          await supabaseClient.from('catalog').upsert(catalog.map(c => ({
-            id: c.id, origin: c.origin, type: c.type, color: c.color, photo: c.photo || '', active: !!c.active
-          })));
+          const { error } = await supabaseClient
+            .from('catalog')
+            .upsert(catalog.map(mapCatalogToDB), { onConflict: 'id' });
+          if (error) console.error('Supabase catalog upsert error:', error);
+          catalog.forEach(c => syncedIds.catalog.add(String(c.id)));
         }
+
         if (alterations.length > 0) {
-          await supabaseClient.from('alterations').upsert(alterations.map(mapAltToDB));
+          const { error } = await supabaseClient
+            .from('alterations')
+            .upsert(alterations.map(mapAltToDB), { onConflict: 'id' });
+          if (error) console.error('Supabase alterations upsert error:', error);
+          alterations.forEach(a => syncedIds.alterations.add(String(a.id)));
         }
       } catch (err) {
         console.error('Supabase sync error:', err);
       }
     };
 
-    // অ্যাপ চালু হলে Supabase থেকে সব ডেটা লোড করা
     async function loadFromSupabase() {
+      isSyncingFromCloud = true;
       try {
         const [ordRes, catRes, altRes] = await Promise.all([
           supabaseClient.from('orders').select('*').order('created_at', { ascending: false }),
@@ -3896,23 +3968,41 @@ New thobe fabrics have arrived at Al-Ada'a Al-Shamikh For Men's Tailoring. Visit
           supabaseClient.from('alterations').select('*').order('created_at', { ascending: false })
         ]);
 
-        if (ordRes.data && ordRes.data.length > 0) {
+        if (!ordRes.error && Array.isArray(ordRes.data)) {
           orders = ordRes.data.map(mapOrderFromDB);
-          if (serialCounter < orders.length) serialCounter = orders.length;
+          syncedIds.orders = new Set(orders.map(o => String(o.id)));
+          serialCounter = computeMaxSerial(orders);
         }
-        if (catRes.data && catRes.data.length > 0) {
-          catalog = catRes.data;
+
+        if (!catRes.error && Array.isArray(catRes.data)) {
+          if (catRes.data.length > 0) {
+            catalog = catRes.data.map(mapCatalogFromDB);
+            syncedIds.catalog = new Set(catalog.map(c => String(c.id)));
+          } else if (catalog.length > 0) {
+            // প্রথমবার ডিফল্ট ক্যাটালগ ক্লাউডে পাঠিয়ে দেওয়া
+            await supabaseClient.from('catalog').upsert(catalog.map(mapCatalogToDB), { onConflict: 'id' });
+            syncedIds.catalog = new Set(catalog.map(c => String(c.id)));
+          }
         }
-        if (altRes.data && altRes.data.length > 0) {
+
+        if (!altRes.error && Array.isArray(altRes.data)) {
           alterations = altRes.data.map(mapAltFromDB);
+          syncedIds.alterations = new Set(alterations.map(a => String(a.id)));
         }
 
         originalSaveLocal();
         refreshSerialDisplay();
         updateTodaySummary();
         syncCatalogDropdowns();
+        renderOrderList();
+        renderAlterationList();
+        renderCatalog();
+        renderMonthlyStatement();
+        renderOfferList();
       } catch (err) {
         console.error('Supabase load error:', err);
+      } finally {
+        isSyncingFromCloud = false;
       }
     }
 
